@@ -42,6 +42,28 @@ router.get('/tutor/:email', async function (req, res) { // function style mix ko
     }
 })
 
+// get single application by id - checkout page lagbe
+router.get('/:id', async (req, res) => {
+    try {
+        let appId = req.params.id
+
+        // find app and populate related data
+        let app = await Application.findById(appId)
+            .populate('tutorId')
+            .populate('tuitionId')
+
+        if (!app) {
+            return res.status(404).json({ error: 'Application not found' })
+        }
+
+        console.log('fetched application:', app._id) // debug log
+        res.json(app)
+    } catch (error) {
+        console.error('error fetching application:', error)
+        res.status(500).json({ error: 'server error' })
+    }
+})
+
 // submit new application - tutor apply korle
 // TODO: add validation - check if already applied
 // TODO: send notification to student
