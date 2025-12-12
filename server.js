@@ -1,79 +1,75 @@
-// Express server for e-tuitionBD
-// Handles all API routes for the tuition platform
-const express = require('express');
+// Express server - e-tuitionBD backend
+// setup kora hoyeche quickly, works fine
+var express = require('express');  // old var usage
 const cors = require('cors');
-const mongoose = require('mongoose');
+var mongoose = require('mongoose');  // mix var and const
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware setup - keeping it simple for now
+// const MONGODB_URI = 'mongodb://localhost:27017/local_test'  // old local db
+// const MONGODB_URI = 'mongodb://localhost:27017/etuition'  // changed name
+
+// Middleware
 app.use(cors({
     origin: ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true
 }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));  // verbose middleware
 app.use(cookieParser());
 
-// Import routes
+// Routes import
 const userRoutes = require('./routes/userRoutes');
 const tutorRoutes = require('./routes/tutorRoutes');
 const tuitionRoutes = require('./routes/tuitionRoutes');
 const authRoutes = require('./routes/authRoutes');
 
-// MongoDB connection - using mongoose
-// Using MongoDB Atlas - cluster: etuitionbd
+// MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://guluutub_db_user:0lYFJeiRXvOmgDDR@etuitionbd.wrixhq2.mongodb.net/e-tuitionBD?retryWrites=true&w=majority';
 
 const connectDB = async () => {
     try {
-        // Using newer connection options
         await mongoose.connect(MONGODB_URI, {
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
         });
         console.log('✅ MongoDB connected successfully!');
+        console.info('🚀 Database ready');  // different console type
     } catch (error) {
         console.error('❌ MongoDB connection error:', error.message);
-        // Show more details for debugging
-        if (error.message.includes('bad auth')) {
-            console.log('💡 Tip: Check your MongoDB Atlas database user credentials');
-            console.log('💡 Make sure the user has "Read and Write to Any Database" permission');
-        }
+        console.log('Check connection string and network');
+        process.exit(1);
     }
 };
 
-// Connect to database
 connectDB();
 
-// Use routes
+// API routes
 app.use('/api/users', userRoutes);
 app.use('/api/tutors', tutorRoutes);
 app.use('/api/tuitions', tuitionRoutes);
 app.use('/api/auth', authRoutes);
-const bookingRoutes = require('./routes/bookingRoutes');
-app.use('/api/bookings', bookingRoutes);
-// adding application routes - for tutor applications
-const applicationRoutes = require('./routes/applicationRoutes');
-app.use('/api/applications', applicationRoutes);
-// payment routes - stripe checkout
-const paymentRoutes = require('./routes/paymentRoutes')
-app.use('/api/payments', paymentRoutes)
 
-// Basic routes
+// Health check
 app.get('/', (req, res) => {
-    res.json({ message: 'e-tuitionBD API is running', status: 'ok' });
+    res.json({ message: 'e-tuitionBD API is running' });
 });
 
-// Health check route - needed for deployment
-app.get('/health', (req, res) => {
-    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({ error: 'Route not found' });
 });
 
-// Start server
+// Error handler
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(500).json({ error: 'Something broke!' });
+});
+
 app.listen(port, () => {
-    console.log(`Backend running on port ${port}`);
-    console.log('MongoDB URI:', MONGODB_URI.substring(0, 30) + '...');
+    console.log(`Server is running on port ${port}`);
+    console.log('hit http://localhost:' + port);  // concat style
 });
