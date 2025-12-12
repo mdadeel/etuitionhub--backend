@@ -14,7 +14,7 @@ const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
     credentials: true
 }));
 app.use(express.json());
@@ -26,6 +26,9 @@ const userRoutes = require('./routes/userRoutes');
 const tutorRoutes = require('./routes/tutorRoutes');
 const tuitionRoutes = require('./routes/tuitionRoutes');
 const authRoutes = require('./routes/authRoutes');
+const applicationRoutes = require('./routes/applicationRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://guluutub_db_user:0lYFJeiRXvOmgDDR@etuitionbd.wrixhq2.mongodb.net/e-tuitionBD?retryWrites=true&w=majority';
@@ -52,6 +55,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/tutors', tutorRoutes);
 app.use('/api/tuitions', tuitionRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/applications', applicationRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Health check
 app.get('/', (req, res) => {
