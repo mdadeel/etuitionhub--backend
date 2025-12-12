@@ -92,6 +92,22 @@ router.get('/student/:email', async (req, res) => {
     }
 })
 
+// get ALL payments - for admin dashboard
+router.get('/all', async (req, res) => {
+    try {
+        let payments = await Payment.find()
+            .populate('tutorId')
+            .populate('tuitionId')
+            .sort({ createdAt: -1 })
+
+        console.log('admin fetching all payments:', payments.length)
+        res.json(payments)
+    } catch (err) {
+        console.error('get all payments error:', err)
+        res.status(500).json({ error: 'failed to get payments' })
+    }
+})
+
 // get tutor revenue history
 router.get('/tutor/:email', async (req, res) => {
     try {

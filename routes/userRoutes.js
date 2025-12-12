@@ -38,19 +38,23 @@ router.get('/:email', async (req, res) => {
 // This is called when user logs in with Firebase
 router.post('/', async function (req, res) {
     try {
-        const { email } = req.body;
-        // console.log('creating/updating user:', email);
+        const { email, role } = req.body;
 
-        // Check if user exists - simple approach
+        // Check if user exists
         const existing = await User.findOne({ email });
         if (existing) {
-            // console.log('user already exists');
-            return res.json(existing); // Already exists, return existing
+            // If user re-registers with a different role, update it
+            if (role && role !== existing.role) {
+                console.log('Updating role for', email, 'from', existing.role, 'to', role);
+                existing.role = role;
+                await existing.save();
+            }
+            return res.json(existing);
         }
 
         const newUser = new User(req.body);
         await newUser.save();
-        // console.log('new user created:', newUser._id);
+        console.log('New user created:', email, 'role:', role);
         res.status(201).json(newUser);
     } catch (error) {
         console.error('Error creating user:', error);
