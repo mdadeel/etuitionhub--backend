@@ -74,6 +74,18 @@ router.post('/', async (req, res) => {
 
         let appData = req.body
 
+        // Validate ObjectIds first
+        const mongoose = require('mongoose');
+        const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+        if (!isValidObjectId(appData.tutorId)) {
+            return res.status(400).json({ error: 'Invalid tutor ID format' })
+        }
+
+        if (!isValidObjectId(appData.tuitionId)) {
+            return res.status(400).json({ error: 'Invalid tuition ID - cannot apply to demo tuitions' })
+        }
+
         // check kori already apply korse kina - duplicate avoid
         const existingApp = await Application.findOne({
             tutorEmail: appData.tutorEmail,

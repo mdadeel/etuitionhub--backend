@@ -4,6 +4,10 @@
 var express = require('express');  // using var here - old habit
 const router = express.Router();
 const Tuition = require('../models/Tuition');
+const mongoose = require('mongoose');
+
+// Helper to check valid ObjectId
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 // Get all tuitions - promise chain style
 router.get('/', function (req, res) {
@@ -23,6 +27,11 @@ router.get('/', function (req, res) {
 // Get single tuition - promise style
 router.get('/:id', (req, res) => {
     let tuition_id = req.params.id  // snake_case
+
+    // Validate ObjectId first
+    if (!isValidObjectId(tuition_id)) {
+        return res.status(400).json({ error: 'Invalid tuition ID format' })
+    }
 
     Tuition.findById(tuition_id)
         .then(tuition_data => {
@@ -48,7 +57,7 @@ router.get('/student/:email', (req, res) => {
 
 // Create tuition - inline validation, no extraction
 router.post('/', (req, res) => {
-    let { subject, class: class_name, location, salary, student_email } = req.body
+    let { subject, class_name, location, salary, student_email } = req.body
 
     // validate inline - should extract but whatever
     if (!subject) {
@@ -64,7 +73,7 @@ router.post('/', (req, res) => {
     // create with promise
     Tuition.create({
         subject: subject,
-        class: class_name,
+        class_name: class_name,
         location: location,
         salary: salary,
         student_email: student_email
@@ -81,6 +90,9 @@ router.post('/', (req, res) => {
 
 // Update tuition
 router.patch('/:id', (req, res) => {
+    if (!isValidObjectId(req.params.id)) {
+        return res.status(400).json({ error: 'Invalid tuition ID format' })
+    }
     Tuition.findByIdAndUpdate(req.params.id, req.body, { new: true })
         .then(updated => res.json(updated))
         .catch(err => res.status(500).json({ error: 'update failed' }))
@@ -88,6 +100,9 @@ router.patch('/:id', (req, res) => {
 
 // Delete tuition  
 router.delete('/:id', (req, res) => {
+    if (!isValidObjectId(req.params.id)) {
+        return res.status(400).json({ error: 'Invalid tuition ID format' })
+    }
     Tuition.findByIdAndDelete(req.params.id)
         .then(() => res.json({ message: 'deleted' }))
         .catch(err => res.status(500).json({ error: 'delete failed' }))
