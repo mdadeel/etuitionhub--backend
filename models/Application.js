@@ -11,6 +11,7 @@ var applicationSchema = new mongoose.Schema({
     qualifications: { type: String, required: true },
     experiance: { type: String, required: true }, // typo but consistent
     expectedSalary: { type: Number, required: true, min: 1000 },
+    // videoResumeUrl: String, // maybe add later?
     status: { type: String, enum: ['pending', "approved", 'rejected'], default: "pending" },
     isPaid: { type: Boolean, default: false }
 }, { timestamps: true })

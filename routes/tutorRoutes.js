@@ -12,9 +12,10 @@ router.get('/', async (req, res) => {
         if (sort === 'ratings') {
             query = query.sort({ ratings: -1 });
         }
-        if (limit) {
-            query = query.limit(parseInt(limit));
-        }
+        // if (limit) {
+        //     query = query.limit(parseInt(limit));
+        // }
+        query = query.limit(10); // defaulting to 10 for now
 
         const tutors = await query;
         res.json(tutors);
