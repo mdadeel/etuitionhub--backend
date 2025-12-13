@@ -5,8 +5,13 @@ var mongoose = require('mongoose');  // mix var and const
 const cookieParser = require('cookie-parser');
 require('dotenv').config({ path: './.env' });
 console.log('DEBUG: Environment loaded');
-console.log('DEBUG: JWT_SECRET exists?', !!process.env.JWT_SECRET);
-console.log('DEBUG: MONGODB_URI exists?', !!process.env.MONGODB_URI);
+const uri = process.env.MONGODB_URI || '';
+console.log('DEBUG: URI Length:', uri.length);
+console.log('DEBUG: URI Start:', uri.substring(0, 15));
+console.log('DEBUG: URI End:', uri.substring(uri.length - 10));
+if (uri.includes('@')) {
+    console.log('DEBUG: Config detected user:', uri.split('://')[1].split(':')[0]);
+}
 
 const app = express();
 const port = process.env.PORT || 5000;
