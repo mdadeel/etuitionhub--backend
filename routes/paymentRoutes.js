@@ -1,5 +1,3 @@
-// payment routes - stripe integration er jonno
-// checkout create, webhooks handle, payment history
 
 const express = require('express')
 const router = express.Router()
@@ -7,7 +5,7 @@ const Payment = require('../models/Payment')
 const Application = require('../models/Application')
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
-// create checkout session - student tutor ke pay korbe
+// create checkout session
 router.post('/create-checkout-session', async (req, res) => {
     try {
         let { applicationId, studentEmail, amount } = req.body
@@ -19,7 +17,7 @@ router.post('/create-checkout-session', async (req, res) => {
             return res.status(404).json({ error: 'Application not found' })
         }
 
-        console.log('creating checkout for app:', applicationId) // debug
+        console.log('creating checkout for app:', applicationId)
 
         // stripe checkout session create kortesi
         const session = await stripe.checkout.sessions.create({
@@ -49,7 +47,7 @@ router.post('/create-checkout-session', async (req, res) => {
             }
         })
 
-        // payment record create kortesi database e
+        // payment record create
         let payment = new Payment({
             studentId: app.tuitionId.studentId || null,
             studentEmail: studentEmail,

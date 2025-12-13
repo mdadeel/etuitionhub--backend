@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Booking = require('../models/Booking');
 
-// GET all bookings (for admin or debug)
+// GET all bookings
 router.get('/', async (req, res) => {
     try {
         const bookings = await Booking.find().sort({ createdAt: -1 });
@@ -14,11 +14,10 @@ router.get('/', async (req, res) => {
 });
 
 // GET bookings by student email
-// used in StudentDashboard
 router.get('/student/:email', async (req, res) => {
     try {
         const email = req.params.email;
-        // console.log("Fetching bookings for:", email);
+        // console.log("Fetchin bookings for:", email);
         const bookings = await Booking.find({ studentEmail: email }).sort({ createdAt: -1 });
         res.json(bookings);
     } catch (err) {
@@ -28,13 +27,12 @@ router.get('/student/:email', async (req, res) => {
 });
 
 // GET bookings by tutor email
-// used in TutorDashboard (to be implemented)
 router.get('/tutor/:email', async (req, res) => {
     try {
         const bookings = await Booking.find({ tutorEmail: req.params.email }).sort({ createdAt: -1 });
         res.json(bookings);
     } catch (err) {
-        // console.log(err);
+        // console.log(eror);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -44,7 +42,7 @@ router.post('/', async (req, res) => {
     try {
         const newBooking = new Booking(req.body);
         const saved = await newBooking.save();
-        // console.log("New booking created:", saved._id);
+        // console.log("New bookin created:", saved._id);
         res.status(201).json(saved);
     } catch (err) {
         console.error("Booking error:", err);

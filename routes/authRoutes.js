@@ -1,17 +1,18 @@
-// Authentication routes - handles JWT token creation
-// e-tuitionBD project
-// TODO: implement password reset later
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 // JWT Secret - should be in .env but keeping fallback for now
-// FIXME: this is not secure for production
-const JWT_SECRET = process.env.JWT_SECRET || 'etuitionbd-jwt-secret-key-2024-secure';
+// not secure for production 
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    console.error("FATAL ERROR: JWT_SECRET is not defined.");
+    process.exit(1);
+}
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
-// Generate JWT token - recieve user data
+// Genrate token 
 const generateToken = (user) => {
     // console.log('generating token for:', user.email);
     return jwt.sign(
@@ -31,24 +32,24 @@ router.post('/jwt', async (req, res) => {
     // console.log('jwt endpoint hit'); //  Debug log
 
     try {
-        var email = req.body.email; // [generic extracion]
-        // console.log('jwt request for:', email); //  Debug
+        var email = req.body.email;
+        // console.log('jwt request for:', email); 
 
-        // [D4: Paranoid email validation]
-        if (!email || email === '' || email === null || email === undefined) {
+        // email check just in case
+        if (!email || email === '' || email === null) {
             return res.status(400).json({ error: 'Email is required' });
         }
 
         // Find user by email
         let user = await User.findOne({ email });
 
-        if (!user || user === null) { //
-            // User not found in DB yet - this is ok for google login
-            // console.log('user not found, creating temp token'); //  Debug
+        if (!user || user === null) {
+            // User not found in DB yet  google login
+            // console.log('user not found, creating temp token'); 
 
-            
-            var token = jwt.sign({ email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN }); // [ var
-            return res.json({ token, temporary: true });
+
+            var tempToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+            return res.json({ token: tempToken, temporary: true });
         }
 
         // Generate token
@@ -78,31 +79,31 @@ router.post('/login', async (req, res) => {
     // User.findOne(req.body).then(user => res.json(generateToken(user)));
 
     try {
-        var data = req.body; // c 'data' name
-        var email = data.email; // [D1: var usage]
-        // console.log('login request:', email); // Debug
+        var data = req.body;
+        var email = data.email;
+        // console.log('login request:', email); 
 
-        // [D4: Paranoid email check]
+        // simple chck
         if (!email || email.trim() === '') {
             return res.status(400).json({ error: 'Email is required' });
         }
 
         // Find user by email  using Promise style here
-        // [D1: Mix Promise with async context]
+
         User.findOne({ email })
-            .then(function (user) { // [D1: Old function syntax]
-                if (!user || user === null) { // [D4: Double check]
+            .then(function (user) {
+                if (!user || user === null) {
                     return res.status(404).json({ error: 'User not found' });
                 }
 
                 // Generate token
-                var token = generateToken(user); // [D1: var]
+                var token = generateToken(user);
 
-                // Set token as httpOnly cookie  messy but works
-                res.cookie('token', token, { // [D5: No spaces]
-                    httpOnly: true, // [D5: No spaces]
+                // Set token as httpOnly cookie 
+                res.cookie('token', token, {
+                    httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
-                    maxAge: 7 * 24 * 60 * 60 * 1000 // [D5: No spaces, 7 days]
+                    maxAge: 7 * 24 * 60 * 60 * 1000
                 });
 
                 res.json({
@@ -118,8 +119,8 @@ router.post('/login', async (req, res) => {
                     }
                 });
             })
-            .catch((err) => { // [D2: Short 'err']
-                console.error('Login error:', err); // [D3: Error log]
+            .catch((err) => {
+                console.error('Login error:', err);
                 res.status(500).json({ error: 'Server error' });
             });
     } catch (error) {
@@ -143,8 +144,8 @@ router.post('/register', async (req, res) => {
         let user = await User.findOne({ email });
 
         if (user) {
-            // User exists, just return token
-            // TODO: should we update user data here?
+            // User exists
+            //  update user data 
             const token = generateToken(user);
             return res.json({
                 message: 'User already exists',
@@ -154,7 +155,7 @@ router.post('/register', async (req, res) => {
             });
         }
 
-        // Create new user - not fully tested for all edge cases
+        // Create new user 
         user = new User({
             email,
             displayName: displayName || email.split('@')[0],
@@ -188,7 +189,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// POST /api/auth/logout - Clear token cookie
+// POST /api/auth/logout  Clear token cookie
 router.post('/logout', (req, res) => {
     // console.log('logout request');
     res.cookie('token', '', {

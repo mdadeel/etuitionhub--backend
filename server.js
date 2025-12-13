@@ -1,10 +1,12 @@
-// Express server - e-tuitionBD backend
-// setup kora hoyeche quickly, works fine
+// Express server  e-tuitionBD backend
 var express = require('express');  // old var usage
 const cors = require('cors');
 var mongoose = require('mongoose');  // mix var and const
 const cookieParser = require('cookie-parser');
-require('dotenv').config();
+require('dotenv').config({ path: './.env' });
+console.log('DEBUG: Environment loaded');
+console.log('DEBUG: JWT_SECRET exists?', !!process.env.JWT_SECRET);
+console.log('DEBUG: MONGODB_URI exists?', !!process.env.MONGODB_URI);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -21,8 +23,10 @@ app.use(cors({
     origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
     credentials: true
 }));
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));  // verbose middleware
+app.use(express.urlencoded({ extended: true }));
+
 app.use(cookieParser());
 
 // Routes import
@@ -35,14 +39,14 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://guluutub_db_user:0lYFJeiRXvOmgDDR@etuitionbd.wrixhq2.mongodb.net/e-tuitionBD?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const connectDB = async () => {
     //Promise-style DB connection commented
     // mongoose.connect(MONGODB_URI).then(() => console.log('DB connected'));
 
     try {
-        // [D4: Extra timeout settings for paranoid connection]
+        // extra timeout needed sometimes
         await mongoose.connect(MONGODB_URI, {
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
@@ -53,7 +57,8 @@ const connectDB = async () => {
     } catch (error) {
         console.error('❌ MongoDB connection error:', error.message);
         console.log('Check connection string and network');
-        //  Extra paranuid
+
+        //  just safe check
         if (error && error.message) {
             process.exit(1);
         }
@@ -71,7 +76,7 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
 
-// Health check
+// health check
 app.get('/', (req, res) => {
     res.json({ message: 'e-tuitionBD API is running' });
 });
@@ -83,13 +88,13 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-    console.error('Error:', err); //  error log
-    //  error check
+    console.error('Error:', err);
+    //  safey chck
     if (!err || err === null) return res.status(500).json({ error: 'Unknown error' });
     res.status(500).json({ error: 'Something broke!' });
 });
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
-    console.log('hit http://localhost:' + port);  // concat style
+    console.log('hit http://localhost:' + port);
 });

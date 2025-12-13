@@ -56,7 +56,7 @@ router.get('/:id', async (req, res) => {
             return res.status(404).json({ error: 'Application not found' })
         }
 
-        console.log('fetched application:', app._id) // debug log
+        console.log('fetched application:', app._id)
         res.json(app)
     } catch (error) {
         console.error('error fetching application:', error)
@@ -65,16 +65,16 @@ router.get('/:id', async (req, res) => {
 })
 
 // submit new application - tutor apply korle
-// TODO: add validation - check if already applied
-// TODO: send notification to student
+
+// send noti to student
 router.post('/', async (req, res) => {
     try {
-        // validation missing - add korbo pore bhaiya said
-        // ekhon just save kori
+        // validtion missing  add korbo pore 
+       
 
         let appData = req.body
 
-        // Validate ObjectIds first
+        // Validate Objectid
         const mongoose = require('mongoose');
         const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -86,7 +86,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Invalid tuition ID - cannot apply to demo tuitions' })
         }
 
-        // check kori already apply korse kina - duplicate avoid
+        // chck already apply korse kina
         const existingApp = await Application.findOne({
             tutorEmail: appData.tutorEmail,
             tuitionId: appData.tuitionId
@@ -110,17 +110,17 @@ router.post('/', async (req, res) => {
     }
 })
 
-// update application status - approve/reject korar jonno
-// student dashboard theke call hobe
+// approve/reject korar jonno
+// stdent dashboard  call
 router.patch('/:id', async (req, res) => {
     try {
         let id = req.params.id
-        let updates = req.body // usually status change hobe
+        let updates = req.body // status cng 
 
         const updated = await Application.findByIdAndUpdate(
             id,
             updates,
-            { new: true } // updated document return korbe
+            { new: true } // updatw document 
         )
 
         if (!updated) {
@@ -135,8 +135,8 @@ router.patch('/:id', async (req, res) => {
     }
 })
 
-// delete application - tutor cancel korte pare
-// admin o delete korte parbe
+// delete application
+// admin o delete 
 router.delete('/:id', async function (req, res) {
     try {
         let id = req.params.id
@@ -155,7 +155,7 @@ router.delete('/:id', async function (req, res) {
     }
 })
 
-// TODO: add rute for getting all applications (admin dashboard)
-// TODO: add statistics endpoint - count by status
+//add ruute (admin dashboard)
+// add stetistic endpoint
 
 module.exports = router
