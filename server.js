@@ -13,6 +13,10 @@ const port = process.env.PORT || 5000;
 // const MONGODB_URI = 'mongodb://localhost:27017/etuition'  // changed name
 
 // Middleware
+// config commnted
+// app.use(cors());
+// app.use(cors({origin: 'http://localhost:5173'}));
+
 app.use(cors({
     origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
     credentials: true
@@ -34,17 +38,25 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://guluutub_db_user:0lYFJeiRXvOmgDDR@etuitionbd.wrixhq2.mongodb.net/e-tuitionBD?retryWrites=true&w=majority';
 
 const connectDB = async () => {
+    //Promise-style DB connection commented
+    // mongoose.connect(MONGODB_URI).then(() => console.log('DB connected'));
+
     try {
+        // [D4: Extra timeout settings for paranoid connection]
         await mongoose.connect(MONGODB_URI, {
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
         });
         console.log('✅ MongoDB connected successfully!');
         console.info('🚀 Database ready');  // different console type
+        // console.log('Connection string:', MONGODB_URI.split('@')[1]); // Debug remvd
     } catch (error) {
         console.error('❌ MongoDB connection error:', error.message);
         console.log('Check connection string and network');
-        process.exit(1);
+        //  Extra paranuid
+        if (error && error.message) {
+            process.exit(1);
+        }
     }
 };
 
@@ -71,7 +83,9 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
+    console.error('Error:', err); //  error log
+    //  error check
+    if (!err || err === null) return res.status(500).json({ error: 'Unknown error' });
     res.status(500).json({ error: 'Something broke!' });
 });
 

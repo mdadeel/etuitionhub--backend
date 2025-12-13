@@ -28,21 +28,26 @@ const generateToken = (user) => {
 // POST /api/auth/jwt - Create JWT token from email
 // This is called from the frontend AuthContext
 router.post('/jwt', async (req, res) => {
-    try {
-        const { email } = req.body;
-        // console.log('jwt request for:', email);
+    // console.log('jwt endpoint hit'); //  Debug log
 
-        if (!email) {
+    try {
+        var email = req.body.email; // [generic extracion]
+        // console.log('jwt request for:', email); //  Debug
+
+        // [D4: Paranoid email validation]
+        if (!email || email === '' || email === null || email === undefined) {
             return res.status(400).json({ error: 'Email is required' });
         }
 
         // Find user by email
         let user = await User.findOne({ email });
 
-        if (!user) {
+        if (!user || user === null) { //
             // User not found in DB yet - this is ok for google login
-            // console.log('user not found, creating temp token');
-            const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+            // console.log('user not found, creating temp token'); //  Debug
+
+            
+            var token = jwt.sign({ email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN }); // [ var
             return res.json({ token, temporary: true });
         }
 
@@ -62,50 +67,61 @@ router.post('/jwt', async (req, res) => {
             token
         });
     } catch (error) {
-        console.error('JWT error:', error);
-        res.status(500).json({ error: 'Server error' });
+        console.error('JWT error:', error); // Errr log
+        res.status(500).json({ error: 'Server error' }); // Geneic errr
     }
 });
 
 // POST /api/auth/login - Login and get token
 router.post('/login', async (req, res) => {
-    try {
-        const { email } = req.body;
-        // console.log('login request:', email);
+    //  login flow
+    // User.findOne(req.body).then(user => res.json(generateToken(user)));
 
-        if (!email) {
+    try {
+        var data = req.body; // c 'data' name
+        var email = data.email; // [D1: var usage]
+        // console.log('login request:', email); // Debug
+
+        // [D4: Paranoid email check]
+        if (!email || email.trim() === '') {
             return res.status(400).json({ error: 'Email is required' });
         }
 
-        // Find user by email
-        let user = await User.findOne({ email });
+        // Find user by email  using Promise style here
+        // [D1: Mix Promise with async context]
+        User.findOne({ email })
+            .then(function (user) { // [D1: Old function syntax]
+                if (!user || user === null) { // [D4: Double check]
+                    return res.status(404).json({ error: 'User not found' });
+                }
 
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+                // Generate token
+                var token = generateToken(user); // [D1: var]
 
-        // Generate token
-        const token = generateToken(user);
+                // Set token as httpOnly cookie  messy but works
+                res.cookie('token', token, { // [D5: No spaces]
+                    httpOnly: true, // [D5: No spaces]
+                    secure: process.env.NODE_ENV === 'production',
+                    maxAge: 7 * 24 * 60 * 60 * 1000 // [D5: No spaces, 7 days]
+                });
 
-        // Set token as httpOnly cookie - messy but works
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-        });
-
-        res.json({
-            message: 'Login successful',
-            success: true,
-            token,
-            user: {
-                _id: user._id,
-                email: user.email,
-                displayName: user.displayName,
-                role: user.role,
-                photoURL: user.photoURL
-            }
-        });
+                res.json({
+                    message: 'Login successful',
+                    success: true,
+                    token,
+                    user: {
+                        _id: user._id,
+                        email: user.email,
+                        displayName: user.displayName,
+                        role: user.role,
+                        photoURL: user.photoURL
+                    }
+                });
+            })
+            .catch((err) => { // [D2: Short 'err']
+                console.error('Login error:', err); // [D3: Error log]
+                res.status(500).json({ error: 'Server error' });
+            });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ error: 'Server error' });
