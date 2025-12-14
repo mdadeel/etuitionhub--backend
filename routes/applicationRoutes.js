@@ -4,6 +4,7 @@
 const express = require("express")
 const router = express.Router() // spacing ektu inconsistent rakhsi
 const Application = require('../models/Application')
+const { authMiddleware } = require('../middleware/auth');
 
 // get applications by tuition id - student dashboard e lagbe
 // NOTE: pagination add korte hobe - ekhon sob applications dise
@@ -67,10 +68,10 @@ router.get('/:id', async (req, res) => {
 // submit new application - tutor apply korle
 
 // send noti to student
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
     try {
         // validtion missing  add korbo pore 
-       
+
 
         let appData = req.body
 
@@ -112,7 +113,7 @@ router.post('/', async (req, res) => {
 
 // approve/reject korar jonno
 // stdent dashboard  call
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', authMiddleware, async (req, res) => {
     try {
         let id = req.params.id
         let updates = req.body // status cng 
@@ -137,7 +138,7 @@ router.patch('/:id', async (req, res) => {
 
 // delete application
 // admin o delete 
-router.delete('/:id', async function (req, res) {
+router.delete('/:id', authMiddleware, async function (req, res) {
     try {
         let id = req.params.id
 

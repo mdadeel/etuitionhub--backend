@@ -1,7 +1,7 @@
 // Express server  e-tuitionBD backend
-var express = require('express');  // old var usage
+const express = require('express');
 const cors = require('cors');
-var mongoose = require('mongoose');  // mix var and const
+const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 require('dotenv').config({ path: './.env' });
 console.log('DEBUG: Environment loaded');
@@ -16,13 +16,10 @@ if (uri.includes('@')) {
 const app = express();
 const port = process.env.PORT || 5000;
 
-// const MONGODB_URI = 'mongodb://localhost:27017/local_test'  // old local db
-// const MONGODB_URI = 'mongodb://localhost:27017/etuition'  // changed name
+
 
 // Middleware
-// config commnted
-// app.use(cors());
-// app.use(cors({origin: 'http://localhost:5173'}));
+
 
 app.use(cors({
     origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],

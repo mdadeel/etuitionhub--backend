@@ -9,7 +9,7 @@ var applicationSchema = new mongoose.Schema({
     tuitionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tuition', required: true },
     studentEmail: { type: String, required: true },
     qualifications: { type: String, required: true },
-    experiance: { type: String, required: true }, // typo but consistent
+    experience: { type: String, required: true },
     expectedSalary: { type: Number, required: true, min: 1000 },
     // videoResumeUrl: String, // maybe add later?
     status: { type: String, enum: ['pending', "approved", 'rejected'], default: "pending" },
