@@ -32,23 +32,31 @@ router.get('/:email', async (req, res) => {
     }
 });
 
-// Create/Update user 
+// create/update user 
 // calle when user login with Firebase
 router.post('/', async function (req, res) {
     try {
-        const { email, role } = req.body;
+        const { email, role, displayName, photoURL } = req.body; // destructure more vars
 
         // Check if user exists
         const existing = await User.findOne({ email });
+
         if (existing) {
+            
+            // if existing is student AND incoming is tutor make him tutor
+            if (existing.role === 'student' && role === 'tutor') {
+                existing.role = 'tutor';
+                            // console.log('upgrading user to tutor');
+                await existing.save();
+            }
             // Login successful
             return res.json(existing);
         }
 
-        // Prevent creating admin users directly
+        // prevent creating admin users
         let userRole = role;
         if (userRole === 'admin') {
-            userRole = 'student'; // Force downgrade if trying to be admin
+            userRole = 'student'; 
         }
 
         const newUser = new User({
@@ -65,7 +73,7 @@ router.post('/', async function (req, res) {
     }
 });
 
-// update user by id - Protected
+// update user by id 
 router.patch('/:id', authMiddleware, async (req, res) => {
     try {
         // console.log('updating user:', req.params.id);
