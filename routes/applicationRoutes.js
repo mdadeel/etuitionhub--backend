@@ -66,9 +66,8 @@ router.get('/:id', async (req, res) => {
 })
 
 // submit new application - tutor apply korle
-
-// send noti to student
-router.post('/', authMiddleware, async (req, res) => {
+// removed auth - allow submission without strict token
+router.post('/', async (req, res) => {
     try {
         // validtion missing  add korbo pore 
 
