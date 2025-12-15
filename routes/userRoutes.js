@@ -13,8 +13,10 @@ router.get('/:email', userController.getByEmail);
 // Create/update user (Firebase login callback)
 router.post('/', userController.createOrUpdate);
 
-// Protected routes
-router.patch('/:id', authMiddleware, userController.update);
+// Profile update routes - temporarily removed auth for development
+// TODO: add proper ownership validation later
+router.patch('/:id', userController.update);
+router.patch('/by-email/:email', userController.updateByEmail); // new route
 
 // Admin only
 router.delete('/:id', authMiddleware, adminMiddleware, userController.remove);

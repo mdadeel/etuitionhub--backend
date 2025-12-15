@@ -71,6 +71,22 @@ const updateUser = async (id, updateData) => {
 };
 
 /**
+ * Update user by email
+ * Alternative to ID-based update - more reliable for profile updates
+ */
+const updateUserByEmail = async (email, updateData) => {
+    const updated = await User.findOneAndUpdate(
+        { email },
+        updateData,
+        { new: true, runValidators: true }
+    );
+    if (!updated) {
+        throw AppError.notFound('User');
+    }
+    return updated;
+};
+
+/**
  * Delete user by ID
  * Should be admin-only
  */
@@ -115,6 +131,7 @@ module.exports = {
     getUserById,
     createUser,
     updateUser,
+    updateUserByEmail,
     deleteUser,
     upgradeToTutor,
     userExists

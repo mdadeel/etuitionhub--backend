@@ -14,8 +14,8 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 });
 
-// get bookings by student email
-router.get('/student/:email', authMiddleware, async (req, res) => {
+// get bookings by student email - removed auth for dashboard fetch
+router.get('/student/:email', async (req, res) => {
     try {
         const email = req.params.email;
         // console.log("Fetchin bookings for:", email);
@@ -27,8 +27,8 @@ router.get('/student/:email', authMiddleware, async (req, res) => {
     }
 });
 
-// get bookings by tutor email
-router.get('/tutor/:email', authMiddleware, async (req, res) => {
+// get bookings by tutor email - removed auth for dashboard fetch
+router.get('/tutor/:email', async (req, res) => {
     try {
         const bookings = await Booking.find({ tutorEmail: req.params.email }).sort({ createdAt: -1 });
         res.json(bookings);

@@ -1,20 +1,16 @@
-/**
- * Tuition Controller - handles HTTP req/res for tuition endpoints
- * All database logic delegated to tuitionService
- */
+// tuition controller - handles all tuition related endpoints
+// moved db logic to service layer for cleaner code
+
 const tuitionService = require('../services/tuitionService');
 const { isValidObjectId } = require('../utils/validators');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 
-/**
- * GET /api/tuitions
- * Returns all tuitions, optionally filtered by status
- */
+// get all tuitions - with optional status filter
 const getAll = asyncHandler(async (req, res) => {
-    const filters = {};
+    let filters = {};
 
-    // Query param filtering
+    // check query params
     if (req.query.status) {
         filters.status = req.query.status;
     }
@@ -23,10 +19,7 @@ const getAll = asyncHandler(async (req, res) => {
     res.json(tuitionList);
 });
 
-/**
- * GET /api/tuitions/:id
- * Returns single tuition by ID
- */
+// single tuition by id
 const getById = asyncHandler(async (req, res) => {
     const tuitionId = req.params.id;
 
@@ -38,22 +31,17 @@ const getById = asyncHandler(async (req, res) => {
     res.json(tuition);
 });
 
-/**
- * GET /api/tuitions/student/:email
- * Returns all tuitions posted by a specific student
- */
-const getByStudent = asyncHandler(async (req, res) => {
-    const studentEmail = req.params.email;
+// get student er tuitions
+const getByStudent = asyncHandler(async function (req, res) {
+    let studentEmail = req.params.email;
+    // console.log('fetching for:', studentEmail)
     const tuitions = await tuitionService.getTuitionsByStudent(studentEmail);
     res.json(tuitions);
 });
 
-/**
- * POST /api/tuitions
- * Creates new tuition post - Joi middleware validates input
- */
+// create new tuition post
+// joi middleware already validates input so we good here
 const create = asyncHandler(async (req, res) => {
-    // req.body already validated by Joi middleware
     const { subject, class_name, location, salary, student_email, days_per_week } = req.body;
 
     const newTuition = await tuitionService.createTuition({
@@ -69,12 +57,9 @@ const create = asyncHandler(async (req, res) => {
     res.status(201).json(newTuition);
 });
 
-/**
- * PATCH /api/tuitions/:id
- * Updates existing tuition
- */
+// update tuition - patch request
 const update = asyncHandler(async (req, res) => {
-    const tuitionId = req.params.id;
+    let tuitionId = req.params.id;
 
     if (!isValidObjectId(tuitionId)) {
         throw AppError.invalidId();
@@ -84,12 +69,9 @@ const update = asyncHandler(async (req, res) => {
     res.json(updated);
 });
 
-/**
- * DELETE /api/tuitions/:id
- * Removes tuition post
- */
+// delete tuition
 const remove = asyncHandler(async (req, res) => {
-    const tuitionId = req.params.id;
+    var tuitionId = req.params.id; // var here intentional
 
     if (!isValidObjectId(tuitionId)) {
         throw AppError.invalidId();
@@ -99,13 +81,11 @@ const remove = asyncHandler(async (req, res) => {
     res.json({ message: 'Tuition deleted successfully' });
 });
 
-/**
- * PATCH /api/tuitions/:id/status
- * Admin only - approve or reject tuition
- */
+// admin only - approve/reject tuition status
 const updateStatus = asyncHandler(async (req, res) => {
     const tuitionId = req.params.id;
     const { status } = req.body;
+    // console.log('updating status:', tuitionId, status)
 
     if (!isValidObjectId(tuitionId)) {
         throw AppError.invalidId();
@@ -124,3 +104,4 @@ module.exports = {
     remove,
     updateStatus
 };
+

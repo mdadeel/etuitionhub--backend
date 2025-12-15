@@ -83,6 +83,18 @@ const update = asyncHandler(async (req, res) => {
 });
 
 /**
+ * PATCH /api/users/by-email/:email
+ * Update user by email - alternative to ID-based update
+ */
+const updateByEmail = asyncHandler(async (req, res) => {
+    const email = req.params.email;
+    const updateData = req.body;
+
+    const updated = await userService.updateUserByEmail(email, updateData);
+    res.json(updated);
+});
+
+/**
  * DELETE /api/users/:id
  * Delete user - admin only
  */
@@ -102,5 +114,6 @@ module.exports = {
     getByEmail,
     createOrUpdate,
     update,
+    updateByEmail,
     remove
 };
