@@ -28,6 +28,10 @@ const applicationRoutes = require('./routes/applicationRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+
+// Error handling utilities
+const AppError = require('./utils/AppError');
 
 // Database Connection
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -57,8 +61,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
-// app.use('/api/test', testRoutes); // remove later
 app.use('/api/admin', adminRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health Check
 app.get('/', (req, res) => {
@@ -67,14 +71,33 @@ app.get('/', (req, res) => {
 
 // 404 Handler
 app.use((req, res) => {
-    res.status(404).json({ error: 'Route not found' });
+    res.status(404).json({ error: 'Route not found', errorCode: 'NOT_FOUND' });
 });
 
-// Global Error Handler
+/**
+ * Global Error Handler
+ * Distinguishes between operational errors (AppError) and programming bugs
+ * Sends specific error codes for frontend to handle appropriately
+ */
 app.use((err, req, res, next) => {
-    // console.log('global error hit');
-    console.error('Unhandled Error:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    // Handle known operational errors
+    if (err.isOperational) {
+        return res.status(err.statusCode).json({
+            error: err.message,
+            errorCode: err.errorCode,
+            status: err.status
+        });
+    }
+
+    // Log unexpected errors for debugging
+    console.error('Unexpected Error:', err);
+
+    // Don't leak error details in production
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.status(500).json({
+        error: isProduction ? 'Something went wrong' : err.message,
+        errorCode: 'INTERNAL_ERROR'
+    });
 });
 
 app.listen(port, () => {
