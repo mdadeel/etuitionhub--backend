@@ -1,30 +1,26 @@
-// user schema
-var mongoose = require('mongoose');
-// const bcrypt=require('bcrypt');
+// user model
+const mongoose = require('mongoose');
 
 var userSchema = new mongoose.Schema({
     displayName: { type: String, required: true },
-    email: {
-        type: String, required: true, unique: true
-    },
+    email: { type: String, required: true, unique: true },
     photoURL: String,
     mobileNumber: String,
-    location: String, // area
+    location: String,
     gender: String,
     qualification: String,
-    isVerified: { type: Boolean, default: false }, // admin verify korbe
+    isVerified: { type: Boolean, default: false },
     role: {
         type: String,
-        enum: ['student', 'tutor', 'admin'], default: 'student'
+        enum: ['student', 'tutor', 'admin'],
+        default: 'student'
     },
-    // tutor er jonno
+    // tutor specific
     subjects: [String],
     ratings: Number,
     availableDays: [String],
     expectedSalary: Number
 }, { timestamps: true });
-
-// console.log('User loaded');
 
 var User = mongoose.model('User', userSchema);
 

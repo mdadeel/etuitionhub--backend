@@ -1,27 +1,23 @@
-// tuition schema
-var mongoose = require('mongoose');
-// const validator=require('validator');
+// tuition model
+const mongoose = require('mongoose');
 
 var tuitionSchema = new mongoose.Schema({
     student_email: { type: String, required: true },
     subject: { type: String, required: true },
     class_name: String,
     location: { type: String, required: true },
-    salary: Number, // monthly
+    salary: Number,
     gender: String,
     days_per_week: Number,
     available_days: [String],
     description: String,
     status: {
-        type: String, enum: ['pending', 'approved', 'matched', 'completed'],
+        type: String,
+        enum: ['pending', 'approved', 'matched', 'completed'],
         default: 'pending'
     },
-    assigned_tutor: {
-        type: mongoose.Schema.Types.ObjectId, ref: 'User'
-    }
+    assigned_tutor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
-
-// console.log('Tuition ready');
 
 var Tuition = mongoose.model('Tuition', tuitionSchema);
 

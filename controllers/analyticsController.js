@@ -1,6 +1,6 @@
 /**
- * Analytics Controller - dashboard stats endpoints
- * Returns pre-computed data instead of raw lists
+ * Analytics Controller
+ * Endpoints for dashboard statistics
  */
 const analyticsService = require('../services/analyticsService');
 const asyncHandler = require('../utils/asyncHandler');
@@ -8,12 +8,10 @@ const asyncHandler = require('../utils/asyncHandler');
 /**
  * GET /api/analytics/stats
  * Returns complete dashboard statistics
- * Uses MongoDB aggregation - much more efficient than frontend calculations
  */
 const getDashboardStats = asyncHandler(async (req, res) => {
     const stats = await analyticsService.getDashboardStats();
 
-    // Flatten structure for easier frontend consumption
     res.json({
         totalUsers: stats.users.total,
         totalStudents: stats.users.students,
@@ -30,7 +28,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 
 /**
  * GET /api/analytics/users
- * User distribution breakdown
+ * Returns user distribution by role
  */
 const getUserStats = asyncHandler(async (req, res) => {
     const userStats = await analyticsService.getUserDistribution();
@@ -39,7 +37,7 @@ const getUserStats = asyncHandler(async (req, res) => {
 
 /**
  * GET /api/analytics/tuitions
- * Tuition status breakdown
+ * Returns tuition status breakdown
  */
 const getTuitionStats = asyncHandler(async (req, res) => {
     const tuitionStats = await analyticsService.getTuitionStats();
@@ -48,7 +46,7 @@ const getTuitionStats = asyncHandler(async (req, res) => {
 
 /**
  * GET /api/analytics/revenue
- * Revenue statistics
+ * Returns revenue statistics
  */
 const getRevenueStats = asyncHandler(async (req, res) => {
     const revenueStats = await analyticsService.getRevenueStats();
@@ -57,7 +55,7 @@ const getRevenueStats = asyncHandler(async (req, res) => {
 
 /**
  * GET /api/analytics/revenue/monthly
- * Monthly revenue for charts
+ * Returns monthly revenue for charts
  */
 const getMonthlyRevenue = asyncHandler(async (req, res) => {
     const months = parseInt(req.query.months) || 6;

@@ -19,7 +19,7 @@ router.post('/create-checkout-session', async (req, res) => {
 
         console.log('creating checkout for app:', applicationId)
 
-        // stripe checkout session create kortesi
+        // Create Stripe checkout session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [

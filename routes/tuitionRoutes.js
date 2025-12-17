@@ -8,10 +8,10 @@ const tuitionController = require('../controllers/tuitionController');
 const { authMiddleware } = require('../middleware/auth');
 const { validateCreateTuition, validateUpdateTuition } = require('../validators');
 
-// Public routes
+// Public routes - ORDER MATTERS! specific routes before parametric
 router.get('/', tuitionController.getAll);
-router.get('/:id', tuitionController.getById);
 router.get('/student/:email', tuitionController.getByStudent);
+router.get('/:id', tuitionController.getById);
 
 // Protected routes - require authentication + validation
 router.post('/', authMiddleware, validateCreateTuition, tuitionController.create);

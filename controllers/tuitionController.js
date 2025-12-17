@@ -1,5 +1,4 @@
 // tuition controller - handles all tuition related endpoints
-// moved db logic to service layer for cleaner code
 
 const tuitionService = require('../services/tuitionService');
 const { isValidObjectId } = require('../utils/validators');
@@ -71,7 +70,7 @@ const update = asyncHandler(async (req, res) => {
 
 // delete tuition
 const remove = asyncHandler(async (req, res) => {
-    var tuitionId = req.params.id; // var here intentional
+    const tuitionId = req.params.id;
 
     if (!isValidObjectId(tuitionId)) {
         throw AppError.invalidId();

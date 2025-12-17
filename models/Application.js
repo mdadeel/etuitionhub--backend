@@ -1,9 +1,8 @@
-// application apply er data
-var mongoose = require('mongoose')
-// const { isEmail }=require('validator');
+// application model - tutor applies to tuition
+const mongoose = require('mongoose');
 
 var applicationSchema = new mongoose.Schema({
-    tutorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    tutorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     tutorEmail: { type: String, required: true },
     tutorName: { type: String, required: true },
     tuitionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tuition', required: true },
@@ -11,18 +10,19 @@ var applicationSchema = new mongoose.Schema({
     qualifications: { type: String, required: true },
     experience: { type: String, required: true },
     expectedSalary: { type: Number, required: true, min: 1000 },
-    // videoResumeUrl: String, // maybe add later?
-    status: { type: String, enum: ['pending', "approved", 'rejected'], default: "pending" },
+    status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+    },
     isPaid: { type: Boolean, default: false }
-}, { timestamps: true })
+}, { timestamps: true });
 
-// indexes
-applicationSchema.index({ tuitionId: 1, tutorEmail: 1 })
-applicationSchema.index({ tutorEmail: 1 })
+// indexes - faster queries
+applicationSchema.index({ tuitionId: 1, tutorEmail: 1 });
+applicationSchema.index({ tutorEmail: 1 });
 applicationSchema.index({ studentEmail: 1 });
 
-// console.log('Application ready');
+var Application = mongoose.model('Application', applicationSchema);
 
-let Application = mongoose.model('Application', applicationSchema)
-
-module.exports = Application
+module.exports = Application;
