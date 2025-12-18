@@ -39,21 +39,38 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 // Error handling utilities
 const AppError = require('./utils/AppError');
 
-// Database Connection
+// Database Connection with serverless optimization
 const MONGODB_URI = process.env.MONGODB_URI;
 // const MONGODB_URI = "mongodb://localhost:27017/etuition"; // local fallback
 
+let isConnected = false; // connection cache for serverless
+
 const connectDB = async () => {
+    // Prevent multiple connections in serverless environment
+    if (isConnected && mongoose.connection.readyState === 1) {
+        console.log('Using cached DB connection');
+        return;
+    }
+
+    if (!MONGODB_URI) {
+        console.error('❌ MONGODB_URI environment variable is not set!');
+        // Don't exit in serverless - let the request fail gracefully
+        return;
+    }
+
     try {
         await mongoose.connect(MONGODB_URI, {
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
+            maxPoolSize: 10,  // Limit connections for serverless
         });
+        isConnected = true;
         console.log('✅ MongoDB connected successfully');
     } catch (error) {
-        // console.log(error);
         console.error('❌ MongoDB connection error:', error.message);
-        process.exit(1);
+        isConnected = false;
+        // Don't use process.exit(1) in serverless - it kills the function!
+        // Let the request handlers deal with connection failures
     }
 };
 
