@@ -1,0 +1,66 @@
+### Health check
+GET http://localhost:5000/
+
+### Get all tuitions
+GET http://localhost:5000/api/tuitions
+
+### Get single tuition (replace with real id)
+GET http://localhost:5000/api/tuitions/6578a1b2c3d4e5f6a7b8c9d0
+
+### Get tuitions by student email
+GET http://localhost:5000/api/tuitions/student/test@gmail.com
+
+### Create JWT token
+POST http://localhost:5000/api/auth/jwt
+Content-Type: application/json
+
+{
+    "email": "test@test.com"
+}
+
+### Get user by email
+GET http://localhost:5000/api/users/test@gmail.com
+
+### Create new user
+POST http://localhost:5000/api/users
+Content-Type: application/json
+
+{
+    "email": "newuser@test.com",
+    "displayName": "Test User",
+    "role": "student"
+}
+
+### Get all users (admin)
+GET http://localhost:5000/api/users
+
+### Post new tuition
+POST http://localhost:5000/api/tuitions
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+    "subject": "Mathematics",
+    "class_name": "Class 10",
+    "location": "Dhanmondi, Dhaka",
+    "salary": 5000,
+    "student_email": "student@test.com",
+    "days_per_week": 4
+}
+
+### Get applications for a tuition
+GET http://localhost:5000/api/applications/tuition/6578a1b2c3d4e5f6a7b8c9d0
+
+### Submit application (tutor)
+POST http://localhost:5000/api/applications
+Content-Type: application/json
+
+{
+    "tuitionId": "6578a1b2c3d4e5f6a7b8c9d0",
+    "tutorId": "6578a1b2c3d4e5f6a7b8c9d1",
+    "tutorEmail": "tutor@test.com",
+    "tutorName": "Test Tutor",
+    "qualifications": "BSc in Mathematics",
+    "experience": "2 years",
+    "expectedSalary": 6000
+}

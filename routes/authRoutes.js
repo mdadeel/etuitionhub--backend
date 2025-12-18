@@ -1,7 +1,4 @@
-/**
- * Auth Routes - clean routing layer
- * All logic moved to authController
- */
+// auth routes - jwt and login stuff
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');

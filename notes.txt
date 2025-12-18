@@ -1,0 +1,26 @@
+TODO:
+- add email verification for new users
+- stripe webhook testing on production
+- rate limiting add korte hobe for api
+- password reset feature - firebase handles but need UI
+
+BUGS:
+- sometimes jwt expires early - check expiration time
+- google login on mobile not fully tested
+- tuition edit form doesn't prefill all fields
+
+DEPLOYMENT NOTES:
+- vercel env vars needed: MONGODB_URI, JWT_SECRET, NODE_ENV
+- cors origin update korte hobe for new domain
+- make sure mongodb atlas network access allows 0.0.0.0/0
+
+API ENDPOINTS (for reference):
+- POST /api/auth/jwt - get token
+- POST /api/users - create user
+- GET /api/tuitions - all tuitions
+- POST /api/applications - tutor apply
+
+FUTURE IDEAS:
+- add chat between student and tutor
+- payment history download
+- tutor rating system

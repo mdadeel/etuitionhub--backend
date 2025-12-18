@@ -1,16 +1,11 @@
-/**
- * Auth Controller - handles HTTP layer for authentication
- * All business logic delegated to authService
- */
+// auth controller - login register logout
+// firebase handles actual auth, we just manage jwt and db
 const authService = require('../services/authService');
 const userService = require('../services/userService');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 
-/**
- * POST /api/auth/jwt
- * Generate JWT from email (called from frontend AuthContext)
- */
+// jwt generate - frontend theke call hoy
 const createJWT = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
@@ -34,10 +29,7 @@ const createJWT = asyncHandler(async (req, res) => {
     res.json({ success: true, token });
 });
 
-/**
- * POST /api/auth/login
- * Login with email (Firebase already authenticated)
- */
+// login - firebase already authenticated so just db check
 const login = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
@@ -63,10 +55,7 @@ const login = asyncHandler(async (req, res) => {
     });
 });
 
-/**
- * POST /api/auth/register
- * Register new user and get token
- */
+// register new user
 const register = asyncHandler(async (req, res) => {
     const { email, displayName, photoURL, role } = req.body;
 
@@ -105,10 +94,7 @@ const register = asyncHandler(async (req, res) => {
     });
 });
 
-/**
- * POST /api/auth/logout
- * Clear token cookie
- */
+// logout - clear cookie
 const logout = (req, res) => {
     res.cookie('token', '', {
         httpOnly: true,
@@ -118,10 +104,7 @@ const logout = (req, res) => {
     res.json({ message: 'Logged out successfully', success: true });
 };
 
-/**
- * GET /api/auth/verify
- * Verify token and return user data
- */
+// verify token - check if valid
 const verify = asyncHandler(async (req, res) => {
     const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
 

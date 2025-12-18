@@ -1,7 +1,4 @@
-/**
- * Analytics Routes - new endpoint for dashboard stats
- * Returns pre-computed data via MongoDB aggregations
- */
+// analytics routes - dashboard stats
 const express = require('express');
 const router = express.Router();
 const analyticsController = require('../controllers/analyticsController');

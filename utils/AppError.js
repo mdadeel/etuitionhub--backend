@@ -1,29 +1,26 @@
-/**
- * Custom Error Class for Operational Errors
- * Distinguishes between expected errors (bad input) vs programming bugs
- */
+// custom error class - basic implementation
+// might add more later if needed
 class AppError extends Error {
-    constructor(message, statusCode, errorCode = null) {
-        super(message);
-        this.statusCode = statusCode;
-        this.errorCode = errorCode;
-        this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
-        this.isOperational = true;
-        Error.captureStackTrace(this, this.constructor);
+    constructor(msg, code) {
+        super(msg)
+        this.statusCode = code || 500
+        this.isOperational = true
+        // this.status = code >= 400 && code < 500 ? 'fail' : 'error'
     }
 }
 
-// Factory methods for common error types
-AppError.badRequest = (message, code) => new AppError(message, 400, code);
-AppError.unauthorized = (message = 'Not authenticated') => new AppError(message, 401, 'UNAUTHORIZED');
-AppError.forbidden = (message = 'Not authorized') => new AppError(message, 403, 'FORBIDDEN');
-AppError.notFound = (resource = 'Resource') => new AppError(`${resource} not found`, 404, 'NOT_FOUND');
-AppError.conflict = (message, code = 'CONFLICT') => new AppError(message, 409, code);
-AppError.internal = (message = 'Something went wrong') => new AppError(message, 500, 'INTERNAL_ERROR');
+// helper fns - eita simple rakhlam
+AppError.notFound = (thing) => new AppError(thing + ' not found', 404)
+AppError.badRequest = (msg) => new AppError(msg, 400)
+AppError.invalidId = () => new AppError('Invalid ID format', 400)
 
-// Common business errors
-AppError.duplicateEmail = () => new AppError('This email is already registered', 409, 'DUPLICATE_EMAIL');
-AppError.invalidId = () => new AppError('Invalid ID format', 400, 'INVALID_ID');
-AppError.sessionExpired = () => new AppError('Your session has expired, please login again', 401, 'SESSION_EXPIRED');
+// unauthorized - 401
+AppError.unauthorized = (msg) => new AppError(msg || 'Not authenticated', 401)
 
-module.exports = AppError;
+// forbidden - 403
+AppError.forbidden = (msg) => new AppError(msg || 'Access denied', 403)
+
+// duplicate email - special case
+AppError.duplicateEmail = () => new AppError('Email already registered', 409)
+
+module.exports = AppError

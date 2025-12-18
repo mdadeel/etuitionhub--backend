@@ -1,7 +1,4 @@
-/**
- * Tuition Routes - clean routing layer
- * All logic moved to controller - routes just wire up endpoints
- */
+// tuition routes - basic crud
 const express = require('express');
 const router = express.Router();
 const tuitionController = require('../controllers/tuitionController');

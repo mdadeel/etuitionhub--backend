@@ -1,16 +1,11 @@
-/**
- * Analytics Controller
- * Endpoints for dashboard statistics
- */
+// analytics controller - dashboard stats
 const analyticsService = require('../services/analyticsService');
 const asyncHandler = require('../utils/asyncHandler');
 
-/**
- * GET /api/analytics/stats
- * Returns complete dashboard statistics
- */
+// main dashboard stats - all data ekbare
 const getDashboardStats = asyncHandler(async (req, res) => {
     const stats = await analyticsService.getDashboardStats();
+    // console.log('stats fetched:', stats)
 
     res.json({
         totalUsers: stats.users.total,
@@ -26,39 +21,27 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     });
 });
 
-/**
- * GET /api/analytics/users
- * Returns user distribution by role
- */
+// user stats by role
 const getUserStats = asyncHandler(async (req, res) => {
     const userStats = await analyticsService.getUserDistribution();
     res.json(userStats);
 });
 
-/**
- * GET /api/analytics/tuitions
- * Returns tuition status breakdown
- */
+// tuition status breakdown
 const getTuitionStats = asyncHandler(async (req, res) => {
     const tuitionStats = await analyticsService.getTuitionStats();
     res.json(tuitionStats);
 });
 
-/**
- * GET /api/analytics/revenue
- * Returns revenue statistics
- */
+// revenue stats
 const getRevenueStats = asyncHandler(async (req, res) => {
     const revenueStats = await analyticsService.getRevenueStats();
     res.json(revenueStats);
 });
 
-/**
- * GET /api/analytics/revenue/monthly
- * Returns monthly revenue for charts
- */
+// monthly revenue - chart er jonno
 const getMonthlyRevenue = asyncHandler(async (req, res) => {
-    const months = parseInt(req.query.months) || 6;
+    var months = parseInt(req.query.months) || 6;
     const monthlyData = await analyticsService.getMonthlyRevenue(months);
     res.json(monthlyData);
 });

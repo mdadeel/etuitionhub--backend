@@ -1,40 +1,27 @@
-/**
- * User Service - database operations for users
- * Handles all User model queries in one place
- */
+// user service - db queries for users
+// all user related db ops here
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 
-/**
- * Get all users
- * Admin-only operation typically
- */
+// get all - admin only usually
 const getAllUsers = async () => {
     const users = await User.find();
     return users;
 };
 
-/**
- * Find user by email
- * Primary lookup method since email is unique identifier
- */
+// find by email - main lookup method
 const getUserByEmail = async (email) => {
     const user = await User.findOne({ email });
     return user; // returns null if not found - caller decides if thats an error
 };
 
-/**
- * Find user by ID
- */
+// find by id
 const getUserById = async (id) => {
     const user = await User.findById(id);
     return user;
 };
 
-/**
- * Create new user
- * Handles role validation - prevents direct admin registration
- */
+// create user - admin role block kora ache
 const createUser = async (userData) => {
     // Security check: cant register as admin directly
     let role = userData.role || 'student';
@@ -54,10 +41,7 @@ const createUser = async (userData) => {
     return newUser;
 };
 
-/**
- * Update existing user
- * Returns updated doc for immediate use
- */
+// update user by id
 const updateUser = async (id, updateData) => {
     const updated = await User.findByIdAndUpdate(
         id,
@@ -70,10 +54,7 @@ const updateUser = async (id, updateData) => {
     return updated;
 };
 
-/**
- * Update user by email
- * Alternative to ID-based update - more reliable for profile updates
- */
+// update by email - profile update e use hoy
 const updateUserByEmail = async (email, updateData) => {
     const updated = await User.findOneAndUpdate(
         { email },
@@ -86,10 +67,7 @@ const updateUserByEmail = async (email, updateData) => {
     return updated;
 };
 
-/**
- * Delete user by ID
- * Should be admin-only
- */
+// delete - admin only
 const deleteUser = async (id) => {
     const deleted = await User.findByIdAndDelete(id);
     if (!deleted) {
@@ -98,10 +76,7 @@ const deleteUser = async (id) => {
     return deleted;
 };
 
-/**
- * Upgrade user role (student -> tutor)
- * One-way upgrade only - tutors cant go back to students
- */
+// upgrade student to tutor - one way only
 const upgradeToTutor = async (email) => {
     const user = await User.findOne({ email });
     if (!user) {
@@ -116,10 +91,7 @@ const upgradeToTutor = async (email) => {
     return user;
 };
 
-/**
- * Check if user exists by email
- * Quick check without fetching full document
- */
+// check user exists - quick check
 const userExists = async (email) => {
     const count = await User.countDocuments({ email });
     return count > 0;
