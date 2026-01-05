@@ -1,12 +1,11 @@
-// payment model - store payment records
-// student pays tutor when approving application
+// payment model - manual payment system
+// student submits transaction details, admin verifies
 const mongoose = require('mongoose')
 
 const paymentSchema = new mongoose.Schema({
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+        ref: 'User'
     },
     studentEmail: {
         type: String,
@@ -14,12 +13,14 @@ const paymentSchema = new mongoose.Schema({
     },
     tutorId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+        ref: 'User'
     },
     tutorEmail: {
         type: String,
         required: true
+    },
+    tutorName: {
+        type: String
     },
     applicationId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -28,37 +29,58 @@ const paymentSchema = new mongoose.Schema({
     },
     tuitionId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Tuition',
-        required: true
+        ref: 'Tuition'
     },
     amount: {
         type: Number,
         required: true,
         min: 1000 // minimum payment 1000 tk
     },
-    status: {
+    // Manual payment fields
+    paymentMethod: {
         type: String,
-        enum: ['pending', 'completed', 'failed'],
-        default: "pending"
+        enum: ['bkash', 'nagad', 'rocket', 'bank'],
+        required: true
     },
-    // stripe details
-    stripeSessionId: {
+    transactionId: {
         type: String,
         required: true
     },
-    paymentMethod: {
+    senderNumber: {
         type: String,
-        default: 'stripe'
+        required: true
+    },
+    notes: {
+        type: String
+    },
+    status: {
+        type: String,
+        enum: ['pending_verification', 'verified', 'rejected'],
+        default: 'pending_verification'
+    },
+    // Admin verification
+    verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    verifiedAt: {
+        type: Date
+    },
+    rejectionReason: {
+        type: String
     }
 }, {
-    timestamps: true // createdAt, updatedAt auto
+    timestamps: true
 })
 
-// index for querying
+// indexes for querying
 paymentSchema.index({ studentEmail: 1 })
 paymentSchema.index({ tutorEmail: 1 })
 paymentSchema.index({ applicationId: 1 })
+paymentSchema.index({ status: 1 })
+paymentSchema.index({ transactionId: 1 })
 
 let Payment = mongoose.model('Payment', paymentSchema)
 
 module.exports = Payment
+

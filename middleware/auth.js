@@ -40,4 +40,14 @@ const tutorMiddleware = (req, res, next) => {
     }
 };
 
-module.exports = { authMiddleware, adminMiddleware, tutorMiddleware };
+// Student only middleware
+const studentMiddleware = (req, res, next) => {
+    if (req.user && (req.user.role === 'student' || req.user.role === 'admin')) {
+        next();
+    } else {
+        res.status(403).json({ error: 'Student access required' });
+    }
+};
+
+module.exports = { authMiddleware, adminMiddleware, tutorMiddleware, studentMiddleware };
+

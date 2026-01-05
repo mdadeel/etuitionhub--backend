@@ -1,164 +1,195 @@
+// payment routes - manual payment system
+// no stripe, admin verifies transaction IDs
 
 const express = require('express')
 const router = express.Router()
 const Payment = require('../models/Payment')
 const Application = require('../models/Application')
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+const Tuition = require('../models/Tuition')
+const { authMiddleware, adminMiddleware } = require('../middleware/auth')
+const asyncHandler = require('../utils/asyncHandler')
+const { isValidObjectId } = require('../utils/validators')
 
-// create checkout session
-router.post('/create-checkout-session', async (req, res) => {
-    try {
-        let { applicationId, studentEmail, amount } = req.body
+// Submit manual payment - student submits transaction details
+router.post('/manual', authMiddleware, asyncHandler(async (req, res) => {
+    const {
+        applicationId,
+        studentEmail,
+        tutorEmail,
+        tutorName,
+        amount,
+        paymentMethod,
+        transactionId,
+        senderNumber,
+        notes
+    } = req.body
 
-        // application details anbo
-        let app = await Application.findById(applicationId).populate('tuitionId')
+    // Validate required fields
+    if (!applicationId || !transactionId || !senderNumber || !paymentMethod) {
+        return res.status(400).json({ error: 'Missing required payment fields' })
+    }
 
-        if (!app) {
-            return res.status(404).json({ error: 'Application not found' })
+    if (!isValidObjectId(applicationId)) {
+        return res.status(400).json({ error: 'Invalid application ID' })
+    }
+
+    // Check if application exists
+    const app = await Application.findById(applicationId).populate('tuitionId')
+    if (!app) {
+        return res.status(404).json({ error: 'Application not found' })
+    }
+
+    // Check for duplicate transaction ID
+    const existingPayment = await Payment.findOne({ transactionId: transactionId.trim() })
+    if (existingPayment) {
+        return res.status(400).json({ error: 'This transaction ID has already been submitted' })
+    }
+
+    // Create payment record
+    const payment = new Payment({
+        studentEmail: studentEmail || req.user.email,
+        tutorEmail: tutorEmail || app.tutorEmail,
+        tutorName: tutorName || app.tutorName,
+        tutorId: app.tutorId,
+        applicationId: applicationId,
+        tuitionId: app.tuitionId?._id,
+        amount: amount || app.expectedSalary,
+        paymentMethod: paymentMethod,
+        transactionId: transactionId.trim(),
+        senderNumber: senderNumber.trim(),
+        notes: notes?.trim() || '',
+        status: 'pending_verification'
+    })
+
+    await payment.save()
+
+    console.log('Manual payment submitted:', payment._id, 'TxnID:', transactionId)
+    res.status(201).json(payment)
+}))
+
+// Get student payment history
+router.get('/student/:email', authMiddleware, asyncHandler(async (req, res) => {
+    const email = req.params.email
+
+    // Only allow users to see their own payments (or admin)
+    if (req.user.email !== email && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied' })
+    }
+
+    const payments = await Payment.find({ studentEmail: email })
+        .populate('tutorId')
+        .populate('tuitionId')
+        .sort({ createdAt: -1 })
+
+    res.json(payments)
+}))
+
+// Get tutor revenue history
+router.get('/tutor/:email', authMiddleware, asyncHandler(async (req, res) => {
+    const email = req.params.email
+
+    // Only allow users to see their own revenue (or admin)
+    if (req.user.email !== email && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied' })
+    }
+
+    const payments = await Payment.find({
+        tutorEmail: email,
+        status: 'verified'
+    })
+        .populate('tuitionId')
+        .sort({ createdAt: -1 })
+
+    res.json(payments)
+}))
+
+// Get ALL payments - admin only
+router.get('/all', authMiddleware, adminMiddleware, asyncHandler(async (req, res) => {
+    const payments = await Payment.find()
+        .populate('tutorId')
+        .populate('tuitionId')
+        .sort({ createdAt: -1 })
+
+    console.log('Admin fetching all payments:', payments.length)
+    res.json(payments)
+}))
+
+// Update payment status - admin verify/reject
+router.patch('/:id', authMiddleware, adminMiddleware, asyncHandler(async (req, res) => {
+    const { id } = req.params
+    const { status, rejectionReason } = req.body
+
+    if (!isValidObjectId(id)) {
+        return res.status(400).json({ error: 'Invalid payment ID' })
+    }
+
+    if (!['verified', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status. Must be verified or rejected' })
+    }
+
+    const updateData = {
+        status: status,
+        verifiedBy: req.user.id,
+        verifiedAt: new Date()
+    }
+
+    if (status === 'rejected' && rejectionReason) {
+        updateData.rejectionReason = rejectionReason
+    }
+
+    const payment = await Payment.findByIdAndUpdate(id, updateData, { new: true })
+
+    if (!payment) {
+        return res.status(404).json({ error: 'Payment not found' })
+    }
+
+    // If verified, update application status
+    if (status === 'verified' && payment.applicationId) {
+        await Application.findByIdAndUpdate(payment.applicationId, {
+            status: 'approved',
+            isPaid: true
+        })
+
+        // Update tuition status if exists
+        if (payment.tuitionId) {
+            await Tuition.findByIdAndUpdate(payment.tuitionId, {
+                status: 'matched',
+                assigned_tutor: payment.tutorId
+            })
         }
 
-        console.log('creating checkout for app:', applicationId)
-
-        // Create Stripe checkout session
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [
-                {
-                    price_data: {
-                        currency: 'bdt',
-                        product_data: {
-                            name: `Tuition: ${app.tuitionId?.subject || 'Subject'}`,
-                            description: `Payment to tutor ${app.tutorName}`
-                        },
-                        unit_amount: amount * 100 // stripe uses cents/paisa
-                    },
-                    quantity: 1
-                }
-            ],
-            mode: 'payment',
-            success_url: `${process.env.CLIENT_URL || 'http://localhost:5174'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5174'}/dashboard`,
-            metadata: {
-                applicationId: applicationId.toString(),
-                studentEmail: studentEmail,
-                tutorEmail: app.tutorEmail,
-                tutorId: app.tutorId.toString(),
-                tuitionId: app.tuitionId._id.toString()
-            }
-        })
-
-        // payment record create
-        let payment = new Payment({
-            studentId: app.tuitionId.studentId || null,
-            studentEmail: studentEmail,
-            tutorId: app.tutorId,
-            tutorEmail: app.tutorEmail,
-            applicationId: applicationId,
-            tuitionId: app.tuitionId._id,
-            amount: amount,
-            stripeSessionId: session.id,
-            status: 'pending'
-        })
-
-        await payment.save()
-
-        console.log('payment record created:', payment._id)
-        res.json({ sessionId: session.id, url: session.url })
-
-    } catch (error) {
-        console.error('checkout error:', error)
-        res.status(500).json({ error: error.message })
+        console.log('Payment verified, application approved:', payment.applicationId)
     }
-})
 
-// get student payment history
-router.get('/student/:email', async (req, res) => {
-    try {
-        let email = req.params.email
+    res.json(payment)
+}))
 
-        // student er sob payments
-        let payments = await Payment.find({ studentEmail: email })
-            .populate('tutorId')
-            .populate('tuitionId')
-            .sort({ createdAt: -1 })
+// Get single payment by ID
+router.get('/:id', authMiddleware, asyncHandler(async (req, res) => {
+    const { id } = req.params
 
-        console.log('found payments:', payments.length) // debug
-        res.json(payments)
-    } catch (err) {
-        console.error('get payments error:', err)
-        res.status(500).json({ error: 'failed to get payments' })
+    if (!isValidObjectId(id)) {
+        return res.status(400).json({ error: 'Invalid payment ID' })
     }
-})
 
-// get ALL payments - for admin dashboard
-router.get('/all', async (req, res) => {
-    try {
-        let payments = await Payment.find()
-            .populate('tutorId')
-            .populate('tuitionId')
-            .sort({ createdAt: -1 })
+    const payment = await Payment.findById(id)
+        .populate('tutorId')
+        .populate('tuitionId')
+        .populate('applicationId')
 
-        console.log('admin fetching all payments:', payments.length)
-        res.json(payments)
-    } catch (err) {
-        console.error('get all payments error:', err)
-        res.status(500).json({ error: 'failed to get payments' })
+    if (!payment) {
+        return res.status(404).json({ error: 'Payment not found' })
     }
-})
 
-// get tutor revenue history
-router.get('/tutor/:email', async (req, res) => {
-    try {
-        let email = req.params.email
-
-        let payments = await Payment.find({
-            tutorEmail: email,
-            status: 'completed'
-        })
-            .populate('studentId')
-            .populate('tuitionId')
-            .sort({ createdAt: -1 })
-
-
-
-        res.json(payments)
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ error: 'failed to get revenue' })
+    // Only allow involved parties or admin to view
+    if (req.user.email !== payment.studentEmail &&
+        req.user.email !== payment.tutorEmail &&
+        req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied' })
     }
-})
 
-// stripe webhook - payment success handle korbe
-// TODO: add webhook signature verification for security - bhaiya suggested
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    try {
-        let event = req.body
-
-        console.log('webhook event:', event.type)
-
-        if (event.type === 'checkout.session.completed') {
-            const session = event.data.object
-
-            // payment status update korbo
-            await Payment.findOneAndUpdate(
-                { stripeSessionId: session.id },
-                { status: 'completed' }
-            )
-
-            // application status o approved e update korbo
-            await Application.findByIdAndUpdate(
-                session.metadata.applicationId,
-                { status: 'approved' }
-            )
-
-            console.log('payment completed for app:', session.metadata.applicationId)
-        }
-
-        res.json({ received: true })
-    } catch (error) {
-        console.error('webhook error:', error)
-        res.status(500).json({ error: 'webhook failed' })
-    }
-})
+    res.json(payment)
+}))
 
 module.exports = router
+

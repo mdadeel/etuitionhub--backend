@@ -2,15 +2,15 @@
 // crud operations sob ache - get, post, patch, delete
 
 const express = require("express")
-const router = express.Router() // spacing ektu inconsistent rakhsi
+const router = express.Router()
 const Application = require('../models/Application')
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, tutorMiddleware } = require('../middleware/auth');
 const asyncHandler = require('../utils/asyncHandler');
 const { isValidObjectId } = require('../utils/validators');
 
 // get applications by tuition id - student dashboard e lagbe
-// NOTE: pagination add korte hobe - ekhon sob applications dise
-router.get('/tuition/:tuitionId', asyncHandler(async (req, res) => {
+// Protected - only involved student or admin can see
+router.get('/tuition/:tuitionId', authMiddleware, asyncHandler(async (req, res) => {
     let tuitionId = req.params.tuitionId
 
     if (!isValidObjectId(tuitionId)) {
@@ -20,22 +20,26 @@ router.get('/tuition/:tuitionId', asyncHandler(async (req, res) => {
     // finding all applications for this tuition
     let apps = await Application.find({
         tuitionId: tuitionId
-    }).populate("tutorId") // tutor details o ansi
+    }).populate("tutorId")
 
-    console.log('found apps for tuition:', apps.length) // debugging - rakhi
+    console.log('found apps for tuition:', apps.length)
     res.json(apps)
 }));
 
 // get applications by tutor email - tutor dashboard lagbe
-router.get('/tutor/:email', asyncHandler(async function (req, res) { // function style mix korlam
+// Protected - only the tutor themselves or admin
+router.get('/tutor/:email', authMiddleware, asyncHandler(async function (req, res) {
     let tutorEmail = req.params.email
 
-    // let apps= await Application.find({
+    // Only allow tutor to see their own applications (or admin)
+    if (req.user.email !== tutorEmail && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
     let apps = await Application.find({
         tutorEmail: tutorEmail
-    }).populate('tuitionId') // tuition details populate
+    }).populate('tuitionId')
 
-    // console.log('tutor apps:', apps) // debug - comment out kora thakuk
     res.json(apps)
 }));
 
