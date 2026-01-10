@@ -34,6 +34,15 @@ async function seedAdmin() {
             photoURL: ''
         };
 
+        // Demo Admin user data (for testing)
+        const demoAdminData = {
+            displayName: 'Demo Admin',
+            email: 'demoadmin@etuition.com',
+            role: 'admin',
+            isVerified: true,
+            photoURL: ''
+        };
+
         // Use findOneAndUpdate with upsert to avoid duplicate issues
         const admin = await User.findOneAndUpdate(
             { email: adminData.email },
@@ -41,15 +50,28 @@ async function seedAdmin() {
             { upsert: true, new: true }
         );
 
+        const demoAdmin = await User.findOneAndUpdate(
+            { email: demoAdminData.email },
+            { $set: demoAdminData },
+            { upsert: true, new: true }
+        );
+
         console.log('✅ Admin user created/updated:', admin.email);
+        console.log('✅ Demo Admin user created/updated:', demoAdmin.email);
 
         console.log('\n📋 Admin Credentials:');
         console.log('   Email: admin@etuition.com');
         console.log('   Password: (Set via Firebase - register with this email first)');
+        console.log('\n📋 Demo Admin Credentials:');
+        console.log('   Email: demoadmin@etuition.com');
+        console.log('   Password: password123');
         console.log('\n💡 To use admin account:');
         console.log('   1. Go to /register and create account with email: admin@etuition.com');
         console.log('   2. Login with your password');
         console.log('   3. You will be redirected to Admin Dashboard');
+        console.log('\n💡 For Demo Admin:');
+        console.log('   1. Make sure demoadmin@etuition.com is registered in Firebase');
+        console.log('   2. Use the "Demo Admin" button on the Admin Login page');
 
         process.exit(0);
     } catch (error) {

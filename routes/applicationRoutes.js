@@ -65,8 +65,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 // submit new application - tutor apply korle
-// removed auth - allow submission without strict token
-router.post('/', asyncHandler(async (req, res) => {
+// Protected - requires auth and tutor role
+router.post('/', authMiddleware, tutorMiddleware, asyncHandler(async (req, res) => {
     // validtion missing  add korbo pore 
 
 
@@ -125,7 +125,7 @@ router.patch('/:id', authMiddleware, asyncHandler(async (req, res) => {
 }));
 
 // delete application
-// admin o delete 
+// Only owner (tutor) or admin can delete
 router.delete('/:id', authMiddleware, asyncHandler(async function (req, res) {
     let id = req.params.id
 
@@ -133,11 +133,18 @@ router.delete('/:id', authMiddleware, asyncHandler(async function (req, res) {
         return res.status(400).json({ error: 'Invalid application ID format' });
     }
 
-    let deleted = await Application.findByIdAndDelete(id)
-
-    if (!deleted) {
-        return res.status(404).json({ error: "not found" })
+    // Find the application first to verify ownership
+    const app = await Application.findById(id);
+    if (!app) {
+        return res.status(404).json({ error: "Application not found" });
     }
+
+    // Check ownership: only the tutor who applied or admin can delete
+    if (req.user.email !== app.tutorEmail && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied: You can only delete your own applications' });
+    }
+
+    await Application.findByIdAndDelete(id);
 
     console.log("deleted application:", id) // logging
     res.json({ message: 'deleted successfully' })
