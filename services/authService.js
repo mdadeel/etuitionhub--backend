@@ -6,9 +6,13 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 
-// Load secret from env with fallback
-const JWT_SECRET = process.env.JWT_SECRET || 'etuitionbd-jwt-secret-key-2024-secure';
+// Load secret from env
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+
+if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not defined!');
+}
 
 /**
  * Generate JWT token for user
