@@ -9,7 +9,17 @@ var userSchema = new mongoose.Schema({
     location: String,
     gender: String,
     qualification: String,
-    isVerified: { type: Boolean, default: false },
+    verificationStatus: {
+        type: String,
+        enum: ['unverified', 'pending_review', 'verified_basic', 'verified_premium'],
+        default: 'unverified'
+    },
+    verificationDocuments: [{
+        docUrl: String,
+        docType: String, // e.g., 'National ID', 'Certificate'
+        uploadedAt: { type: Date, default: Date.now }
+    }],
+    isVerified: { type: Boolean, default: false }, // Keep for backward compat
     role: {
         type: String,
         enum: ['student', 'tutor', 'admin'],

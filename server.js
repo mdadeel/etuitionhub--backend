@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
-require('dotenv').config({ path: './.env' });
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 
 // console.log('env loaded'); // debug
 
@@ -35,6 +36,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const settingRoutes = require('./routes/settingRoutes');
 
 // Error handling utilities
 const AppError = require('./utils/AppError');
@@ -98,6 +100,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/settings', settingRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

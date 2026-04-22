@@ -22,7 +22,22 @@ const authMiddleware = (req, res, next) => {
         next();
     } catch (error) {
         console.error('Auth middleware error:', error.message);
-        return res.status(401).json({ error: 'Invalid token' });
+        
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ 
+                error: 'Token has expired', 
+                errorCode: 'TOKEN_EXPIRED' 
+            });
+        }
+        
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ 
+                error: 'Invalid token format', 
+                errorCode: 'INVALID_TOKEN' 
+            });
+        }
+
+        return res.status(401).json({ error: 'Authentication failed' });
     }
 };
 
