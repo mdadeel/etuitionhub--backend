@@ -64,8 +64,8 @@ const connectDB = async () => {
         await mongoose.connect(MONGODB_URI, {
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
-            maxPoolSize: 10,
-            dbName: 'etuition' // Explicitly set database name
+            maxPoolSize: 10
+            // dbName: 'etuition' // Removed: Data is currently in the default 'test' database.
         });
         
         isConnected = true;

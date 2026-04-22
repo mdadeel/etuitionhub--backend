@@ -5,14 +5,21 @@ const { isValidObjectId } = require('../utils/validators');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 
-// get all tuitions - with optional status filter
+// get all tuitions - with optional status filter, search, and pagination
 const getAll = asyncHandler(async (req, res) => {
-    let filters = {};
-
-    // check query params
-    if (req.query.status) {
-        filters.status = req.query.status;
-    }
+    const filters = {
+        status: req.query.status,
+        search: req.query.search,
+        classFilter: req.query.classFilter,
+        locationFilter: req.query.locationFilter,
+        sortBy: req.query.sortBy,
+        page: req.query.page ? parseInt(req.query.page) : undefined,
+        limit: req.query.limit ? parseInt(req.query.limit) : undefined,
+        student_email: req.query.student_email
+    };
+    
+    console.log('[DEBUG API] req.query:', req.query);
+    console.log('[DEBUG API] filters:', filters);
 
     const tuitionList = await tuitionService.getAllTuitions(filters);
     res.json(tuitionList);

@@ -2,16 +2,69 @@
 const Tuition = require('../models/Tuition');
 const AppError = require('../utils/AppError');
 
-// get all tuitions with optional filters
+// get all tuitions with optional filters, search, and pagination
 const getAllTuitions = async (filters = {}) => {
-    var query = {};
+    const query = {};
 
     // build query
     if (filters.status) query.status = filters.status;
     if (filters.student_email) query.student_email = filters.student_email;
+    if (filters.classFilter) query.class_name = filters.classFilter;
+    if (filters.locationFilter) {
+        query.location = { $regex: filters.locationFilter, $options: 'i' };
+    }
+    
+    if (filters.search) {
+        const searchRegex = new RegExp(filters.search, 'i');
+        query.$or = [
+            { subject: searchRegex },
+            { location: searchRegex },
+            { class_name: searchRegex }
+        ];
+    }
 
-    var tuitions = await Tuition.find(query).sort({ createdAt: -1 });
-    return tuitions;
+    let sortOption = { createdAt: -1 }; // default newest
+    if (filters.sortBy === 'oldest') {
+        sortOption = { createdAt: 1 };
+    } else if (filters.sortBy === 'salary-high') {
+        sortOption = { salary: -1 };
+    } else if (filters.sortBy === 'salary-low') {
+        sortOption = { salary: 1 };
+    }
+    
+    console.log('[DEBUG DB] MongoDB Query:', JSON.stringify(query));
+
+    // Check if pagination is requested
+    if (filters.page || filters.limit) {
+        const page = filters.page || 1;
+        const limit = filters.limit || 8;
+        const skip = (page - 1) * limit;
+
+        const [tuitions, total, uniqueClasses, uniqueLocations] = await Promise.all([
+            Tuition.find(query).sort(sortOption).skip(skip).limit(limit),
+            Tuition.countDocuments(query),
+            Tuition.distinct('class_name', { status: 'approved' }),
+            Tuition.distinct('location', { status: 'approved' })
+        ]);
+
+        return {
+            data: tuitions,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+                totalItems: total,
+                hasNextPage: page * limit < total,
+                hasPrevPage: page > 1
+            },
+            filterOptions: {
+                classes: uniqueClasses.filter(Boolean),
+                locations: uniqueLocations.filter(Boolean)
+            }
+        };
+    }
+
+    // Default backward compatible behavior
+    return await Tuition.find(query).sort(sortOption);
 };
 
 // get by id - throws if not found
