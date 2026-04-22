@@ -48,31 +48,43 @@ let isConnected = false; // connection cache for serverless
 const connectDB = async () => {
     // Prevent multiple connections in serverless environment
     if (isConnected && mongoose.connection.readyState === 1) {
-        console.log('Using cached DB connection');
         return;
     }
 
     if (!MONGODB_URI) {
         console.error('❌ MONGODB_URI environment variable is not set!');
-        // Don't exit in serverless - let the request fail gracefully
         return;
     }
 
     try {
+        // Mask password for safe logging
+        const maskedUri = MONGODB_URI.replace(/\/\/(.*):(.*)@/, '//***:***@');
+        console.log(`📡 Attempting to connect to: ${maskedUri}`);
+
         await mongoose.connect(MONGODB_URI, {
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
-            maxPoolSize: 10,  // Limit connections for serverless
+            maxPoolSize: 10,
+            dbName: 'etuition' // Explicitly set database name
         });
+        
         isConnected = true;
         console.log('✅ MongoDB connected successfully');
     } catch (error) {
         console.error('❌ MongoDB connection error:', error.message);
         isConnected = false;
-        // Don't use process.exit(1) in serverless - it kills the function!
-        // Let the request handlers deal with connection failures
     }
 };
+
+// Monitor connection events
+mongoose.connection.on('error', err => {
+    console.error('📡 MongoDB Runtime Error:', err.message);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.warn('📡 MongoDB disconnected. Reconnecting...');
+    isConnected = false;
+});
 
 connectDB();
 
