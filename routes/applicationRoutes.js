@@ -43,6 +43,29 @@ router.get('/tutor/:email', authMiddleware, asyncHandler(async function (req, re
     res.json(apps)
 }));
 
+// get applications by student email - student dashboard needs this
+// Returns all applications for all tuitions belonging to this student
+router.get('/student/:email', authMiddleware, asyncHandler(async (req, res) => {
+    let studentEmail = req.params.email
+
+    // Only allow student to see their own applications (or admin)
+    if (req.user.email !== studentEmail && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // First get all tuitions for this student
+    const Tuition = require('../models/Tuition');
+    const studentTuitions = await Tuition.find({ student_email: studentEmail });
+    const tuitionIds = studentTuitions.map(t => t._id);
+
+    // Then find all applications for those tuitions
+    let apps = await Application.find({
+        tuitionId: { $in: tuitionIds }
+    }).populate('tuitionId').populate('tutorId');
+
+    res.json(apps)
+}));
+
 // get single application by id - checkout page lagbe
 router.get('/:id', asyncHandler(async (req, res) => {
     let appId = req.params.id
