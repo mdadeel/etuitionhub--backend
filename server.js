@@ -3,12 +3,51 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const http = require('http');
+const { Server } = require("socket.io");
 require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 
 // console.log('env loaded'); // debug
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:3000',
+        'https://e-tuitionhub.vercel.app',
+        'https://etuitionhub.vercel.app'
+    ],
+    methods: ["GET", "POST"]
+  }
+});
+
+// Socket.io WebRTC Signaling
+io.on("connection", (socket) => {
+    socket.on("join-room", (roomId, userId) => {
+        socket.join(roomId);
+        socket.to(roomId).emit("user-connected", userId);
+
+        socket.on("disconnect", () => {
+            socket.to(roomId).emit("user-disconnected", userId);
+        });
+        
+        socket.on("signal", (data) => {
+            io.to(data.room).emit("signal", {
+                userId: data.userId,
+                signal: data.signal
+            });
+        });
+        
+        socket.on("chat-message", (data) => {
+            io.to(data.room).emit("chat-message", data);
+        });
+    });
+});
 
 // Middleware - CORS setup for local dev and production
 app.use(cors({
@@ -88,7 +127,7 @@ mongoose.connection.on('disconnected', () => {
     isConnected = false;
 });
 
-connectDB();
+// connectDB(); // Removed from here
 
 // API Routes
 app.use('/api/users', userRoutes);
@@ -138,6 +177,8 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+connectDB().then(() => {
+    server.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
+    });
 });

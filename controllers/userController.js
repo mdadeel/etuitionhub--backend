@@ -37,10 +37,16 @@ const getByEmail = asyncHandler(async (req, res) => {
  * Returns existing user if already registered
  */
 const createOrUpdate = asyncHandler(async (req, res) => {
-    const { email, role, displayName, photoURL, mobileNumber } = req.body;
+    let { email, role, displayName, photoURL, mobileNumber } = req.body;
 
     if (!email) {
         throw AppError.badRequest('Email is required', 'MISSING_EMAIL');
+    }
+
+    if (role) {
+        role = role.toLowerCase();
+    } else {
+        role = 'student';
     }
 
     // Check if user exists
@@ -78,6 +84,10 @@ const update = asyncHandler(async (req, res) => {
         throw AppError.invalidId();
     }
 
+    if (req.body && req.body.role) {
+        req.body.role = req.body.role.toLowerCase();
+    }
+
     const updated = await userService.updateUser(userId, req.body);
     res.json(updated);
 });
@@ -88,7 +98,11 @@ const update = asyncHandler(async (req, res) => {
  */
 const updateByEmail = asyncHandler(async (req, res) => {
     const email = req.params.email;
-    const updateData = req.body;
+    const updateData = req.body || {};
+
+    if (updateData.role) {
+        updateData.role = updateData.role.toLowerCase();
+    }
 
     const updated = await userService.updateUserByEmail(email, updateData);
     res.json(updated);

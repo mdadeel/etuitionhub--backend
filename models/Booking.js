@@ -26,7 +26,7 @@ const bookingSchema = new mongoose.Schema({
     mobile: String, // Contact number
     status: {
         type: String,
-        enum: ['pending', 'accepted', 'rejected', 'completed'],
+        enum: ['pending', 'accepted', 'rejected', 'completed', 'cancelled'],
         default: 'pending'
     },
     isAccepted: {
@@ -34,6 +34,17 @@ const bookingSchema = new mongoose.Schema({
         default: false
     },
     meetingDate: Date, // For scheduling
+    // New fields for BD Tutor Connect Upgrade
+    scheduledAt: Date, // Real scheduling time
+    duration: Number, // in minutes
+    sessionLink: String, // WebRTC room ID
+    payment: {
+        amount: Number,
+        currency: { type: String, default: 'BDT' },
+        method: { type: String, enum: ['bkash', 'nagad', 'sslcommerz', 'stripe', 'free_trial'] },
+        transactionId: String,
+        status: { type: String, enum: ['pending', 'paid', 'refunded'] }
+    },
     createdAt: {
         type: Date,
         default: Date.now

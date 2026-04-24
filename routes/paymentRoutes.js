@@ -191,5 +191,62 @@ router.get('/:id', authMiddleware, asyncHandler(async (req, res) => {
     res.json(payment)
 }))
 
+// --- bKash Integration (Mock) ---
+
+// Create bKash Payment
+router.post('/bkash/create', authMiddleware, asyncHandler(async (req, res) => {
+    const { amount, bookingId, tutorName } = req.body;
+    
+    if (!amount || !bookingId) {
+        return res.status(400).json({ error: 'Amount and booking ID are required' });
+    }
+
+    try {
+        // In a real implementation, you would call bKash's /create endpoint here.
+        // For now, we simulate a successful bKash checkout URL generation.
+        
+        const mockPaymentID = 'BKASH_' + Date.now();
+        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+        
+        // Mock bKash gateway URL that redirects back to our callback
+        const mockBkashUrl = `${clientUrl}/payment-success?session_id=${mockPaymentID}&booking_id=${bookingId}&method=bkash`;
+
+        res.json({ 
+            paymentID: mockPaymentID, 
+            bkashURL: mockBkashUrl 
+        });
+    } catch (error) {
+        console.error("bKash create error:", error);
+        res.status(500).json({ error: 'Failed to create bKash payment' });
+    }
+}));
+
+// --- Nagad Integration (Mock) ---
+
+// Create Nagad Payment
+router.post('/nagad/create', authMiddleware, asyncHandler(async (req, res) => {
+    const { amount, bookingId, tutorName } = req.body;
+    
+    if (!amount || !bookingId) {
+        return res.status(400).json({ error: 'Amount and booking ID are required' });
+    }
+
+    try {
+        // Simulate Nagad payment URL generation
+        const mockPaymentID = 'NAGAD_' + Date.now();
+        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+        
+        const mockNagadUrl = `${clientUrl}/payment-success?session_id=${mockPaymentID}&booking_id=${bookingId}&method=nagad`;
+
+        res.json({ 
+            paymentID: mockPaymentID, 
+            nagadURL: mockNagadUrl 
+        });
+    } catch (error) {
+        console.error("Nagad create error:", error);
+        res.status(500).json({ error: 'Failed to create Nagad payment' });
+    }
+}));
+
 module.exports = router
 
