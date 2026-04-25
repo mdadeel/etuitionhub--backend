@@ -34,7 +34,8 @@ const getByEmail = asyncHandler(async (req, res) => {
 /**
  * POST /api/users
  * Create or update user (Firebase login flow)
- * Returns existing user if already registered
+ * Returns existing user if already registered, creates if new.
+ * Uses atomic upsert to prevent E11000 duplicate key errors.
  */
 const createOrUpdate = asyncHandler(async (req, res) => {
     let { email, role, displayName, photoURL, mobileNumber } = req.body;
@@ -43,27 +44,43 @@ const createOrUpdate = asyncHandler(async (req, res) => {
         throw AppError.badRequest('Email is required', 'MISSING_EMAIL');
     }
 
+    const normalizedEmail = email.toLowerCase();
+
     if (role) {
         role = role.toLowerCase();
     } else {
         role = 'student';
     }
 
-    // Check if user exists
-    const existing = await userService.getUserByEmail(email);
+    // Check if user already exists first
+    const existing = await userService.getUserByEmail(normalizedEmail);
 
     if (existing) {
-        // Handle role upgrade (student -> tutor)
-        if (existing.role !== role && existing.role === 'student' && role === 'tutor') {
-            const upgraded = await userService.upgradeToTutor(email);
+        // User exists — preserve their role (never downgrade admin/tutor)
+        // But update their display info if Firebase has fresher data
+        const shouldUpdateInfo = (displayName && displayName !== existing.displayName) ||
+                                 (photoURL && photoURL !== existing.photoURL);
+
+        if (shouldUpdateInfo) {
+            const updated = await userService.updateUserByEmail(normalizedEmail, {
+                ...(displayName && { displayName }),
+                ...(photoURL && { photoURL }),
+            });
+            return res.json(updated);
+        }
+
+        // Handle student -> tutor upgrade request
+        if (existing.role === 'student' && role === 'tutor') {
+            const upgraded = await userService.upgradeToTutor(normalizedEmail);
             return res.json(upgraded);
         }
+
         return res.json(existing);
     }
 
-    // Create new user
+    // New user — create via atomic upsert
     const newUser = await userService.createUser({
-        email,
+        email: normalizedEmail,
         displayName,
         photoURL,
         mobileNumber,

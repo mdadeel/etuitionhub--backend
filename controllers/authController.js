@@ -13,11 +13,11 @@ const createJWT = asyncHandler(async (req, res) => {
         throw AppError.badRequest('Email is required', 'MISSING_EMAIL');
     }
 
-    const user = await userService.getUserByEmail(email);
+    const user = await userService.getUserByEmail(email.toLowerCase());
 
     if (!user) {
         // User not in DB yet - return temporary token
-        const tempToken = authService.generateTempToken(email);
+        const tempToken = authService.generateTempToken(email.toLowerCase());
         return res.json({ token: tempToken, temporary: true });
     }
 

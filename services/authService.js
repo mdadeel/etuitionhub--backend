@@ -43,22 +43,26 @@ const generateTempToken = (email) => {
  */
 const findOrCreateUser = async (userData) => {
     const { email, displayName, photoURL, role } = userData;
+    const normalizedEmail = email.toLowerCase();
 
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
         // New user - create with provided role (but prevent direct admin)
         let safeRole = role || 'student';
         if (safeRole === 'admin') safeRole = 'student';
 
-        user = new User({
-            email,
-            displayName: displayName || email.split('@')[0],
-            photoURL: photoURL || '',
-            role: safeRole,
-            isVerified: false
-        });
-        await user.save();
+        user = await User.findOneAndUpdate(
+            { email: normalizedEmail },
+            { $setOnInsert: {
+                email: normalizedEmail,
+                displayName: displayName || normalizedEmail.split('@')[0],
+                photoURL: photoURL || '',
+                role: safeRole,
+                isVerified: false
+            }},
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
     }
 
     const token = generateToken(user);
@@ -70,7 +74,7 @@ const findOrCreateUser = async (userData) => {
  * Returns user data and token if found
  */
 const loginByEmail = async (email) => {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
         throw AppError.notFound('User');
