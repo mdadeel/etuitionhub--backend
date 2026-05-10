@@ -4,6 +4,8 @@ const router = express.Router();
 const User = require('../models/User');
 const Availability = require('../models/Availability');
 const Booking = require('../models/Booking');
+const { authMiddleware } = require('../middleware/auth');
+const asyncHandler = require('../utils/asyncHandler');
 
 // get all tutrs with filters
 router.get('/', async (req, res) => {
@@ -71,5 +73,50 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+
+// Create availability - tutor sets their weekly schedule
+router.post('/availability', authMiddleware, asyncHandler(async (req, res) => {
+    const { dayOfWeek, slots } = req.body;
+    const tutorId = req.user.userId;
+
+    // Check if availability for this day already exists
+    let availability = await Availability.findOne({ tutorId, dayOfWeek });
+
+    if (availability) {
+        // Update existing
+        availability.slots = slots;
+        await availability.save();
+        return res.json(availability);
+    }
+
+    // Create new
+    availability = new Availability({ tutorId, dayOfWeek, slots });
+    await availability.save();
+    res.status(201).json(availability);
+}));
+
+// Update availability
+router.put('/availability/:day', authMiddleware, asyncHandler(async (req, res) => {
+    const dayOfWeek = parseInt(req.params.day);
+    const { slots } = req.body;
+    const tutorId = req.user.userId;
+
+    const availability = await Availability.findOneAndUpdate(
+        { tutorId, dayOfWeek },
+        { slots },
+        { new: true, upsert: true }
+    );
+
+    res.json(availability);
+}));
+
+// Delete availability for a day
+router.delete('/availability/:day', authMiddleware, asyncHandler(async (req, res) => {
+    const dayOfWeek = parseInt(req.params.day);
+    const tutorId = req.user.userId;
+
+    await Availability.findOneAndDelete({ tutorId, dayOfWeek });
+    res.json({ message: 'Availability deleted' });
+}));
 
 module.exports = router;
