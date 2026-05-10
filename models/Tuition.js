@@ -29,6 +29,12 @@ tuitionSchema.index({ status: 1, location: 1 });
 tuitionSchema.index({ status: 1, class_name: 1 });
 tuitionSchema.index({ student_email: 1 });
 
+// Text index for enhanced search
+tuitionSchema.index(
+    { subject: 'text', class_name: 'text', location: 'text' },
+    { weights: { subject: 3, class_name: 2, location: 1 } }
+);
+
 var Tuition = mongoose.model('Tuition', tuitionSchema);
 
 module.exports = Tuition;

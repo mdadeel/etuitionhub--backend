@@ -15,12 +15,18 @@ const getAllTuitions = async (filters = {}) => {
     }
     
     if (filters.search) {
-        const searchRegex = new RegExp(filters.search, 'i');
-        query.$or = [
-            { subject: searchRegex },
-            { location: searchRegex },
-            { class_name: searchRegex }
-        ];
+        if (filters.useTextSearch) {
+            // Use text search for better performance on large datasets
+            query.$text = { $search: filters.search };
+        } else {
+            // Default regex search for backward compatibility
+            const searchRegex = new RegExp(filters.search, 'i');
+            query.$or = [
+                { subject: searchRegex },
+                { location: searchRegex },
+                { class_name: searchRegex }
+            ];
+        }
     }
 
     let sortOption = { createdAt: -1 }; // default newest
