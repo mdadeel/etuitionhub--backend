@@ -79,19 +79,35 @@ router.post('/availability', authMiddleware, asyncHandler(async (req, res) => {
     const { dayOfWeek, slots } = req.body;
     const tutorId = req.user.userId;
 
-    // Check if availability for this day already exists
-    let availability = await Availability.findOne({ tutorId, dayOfWeek });
-
-    if (availability) {
-        // Update existing
-        availability.slots = slots;
-        await availability.save();
-        return res.json(availability);
+    // Verify user has tutor role
+    const user = await User.findById(tutorId);
+    if (!user || user.role !== 'tutor') {
+        return res.status(403).json({ error: 'Only tutors can set availability' });
     }
 
-    // Create new
-    availability = new Availability({ tutorId, dayOfWeek, slots });
-    await availability.save();
+    // Validate dayOfWeek (0-6)
+    if (dayOfWeek === undefined || dayOfWeek < 0 || dayOfWeek > 6 || !Number.isInteger(dayOfWeek)) {
+        return res.status(400).json({ error: 'dayOfWeek must be an integer between 0 and 6' });
+    }
+
+    // Validate slots structure
+    if (!slots || !Array.isArray(slots)) {
+        return res.status(400).json({ error: 'slots must be an array' });
+    }
+
+    for (const slot of slots) {
+        if (!slot.startTime || !slot.endTime) {
+            return res.status(400).json({ error: 'Each slot must have startTime and endTime' });
+        }
+    }
+
+    // Upsert - create or update
+    const availability = await Availability.findOneAndUpdate(
+        { tutorId, dayOfWeek },
+        { slots },
+        { new: true, upsert: true }
+    );
+
     res.status(201).json(availability);
 }));
 
@@ -100,6 +116,22 @@ router.put('/availability/:day', authMiddleware, asyncHandler(async (req, res) =
     const dayOfWeek = parseInt(req.params.day);
     const { slots } = req.body;
     const tutorId = req.user.userId;
+
+    // Verify user has tutor role
+    const user = await User.findById(tutorId);
+    if (!user || user.role !== 'tutor') {
+        return res.status(403).json({ error: 'Only tutors can update availability' });
+    }
+
+    // Validate dayOfWeek
+    if (isNaN(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
+        return res.status(400).json({ error: 'dayOfWeek must be an integer between 0 and 6' });
+    }
+
+    // Validate slots
+    if (!slots || !Array.isArray(slots)) {
+        return res.status(400).json({ error: 'slots must be an array' });
+    }
 
     const availability = await Availability.findOneAndUpdate(
         { tutorId, dayOfWeek },
@@ -115,7 +147,23 @@ router.delete('/availability/:day', authMiddleware, asyncHandler(async (req, res
     const dayOfWeek = parseInt(req.params.day);
     const tutorId = req.user.userId;
 
-    await Availability.findOneAndDelete({ tutorId, dayOfWeek });
+    // Verify user has tutor role
+    const user = await User.findById(tutorId);
+    if (!user || user.role !== 'tutor') {
+        return res.status(403).json({ error: 'Only tutors can delete availability' });
+    }
+
+    // Validate dayOfWeek
+    if (isNaN(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
+        return res.status(400).json({ error: 'dayOfWeek must be an integer between 0 and 6' });
+    }
+
+    const result = await Availability.findOneAndDelete({ tutorId, dayOfWeek });
+
+    if (!result) {
+        return res.status(404).json({ error: 'Availability not found' });
+    }
+
     res.json({ message: 'Availability deleted' });
 }));
 
