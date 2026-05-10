@@ -46,9 +46,48 @@ const isValidSalary = (salary) => {
     return num >= 1000 && num <= 50000;
 };
 
+/**
+ * Sanitize string input to prevent XSS
+ * Removes HTML tags and dangerous characters
+ */
+const sanitizeString = (str) => {
+    if (!str || typeof str !== 'string') return str;
+    return str
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&[#a-zA-Z0-9]+;/g, '') // Remove HTML entities
+        .trim();
+};
+
+/**
+ * Sanitize object recursively
+ * @param {Object} obj - Object to sanitize
+ * @returns {Object} - Sanitized object
+ */
+const sanitizeObject = (obj) => {
+    if (!obj || typeof obj !== 'object') return obj;
+
+    const sanitized = {};
+    for (const [key, value] of Object.entries(obj)) {
+        if (typeof value === 'string') {
+            sanitized[key] = sanitizeString(value);
+        } else if (Array.isArray(value)) {
+            sanitized[key] = value.map(item =>
+                typeof item === 'string' ? sanitizeString(item) : item
+            );
+        } else if (typeof value === 'object' && value !== null) {
+            sanitized[key] = sanitizeObject(value);
+        } else {
+            sanitized[key] = value;
+        }
+    }
+    return sanitized;
+};
+
 module.exports = {
     isValidObjectId,
     isValidEmail,
     isValidBDPhone,
-    isValidSalary
+    isValidSalary,
+    sanitizeString,
+    sanitizeObject
 };

@@ -60,6 +60,8 @@ const loginSchema = Joi.object({
     email: Joi.string()
         .email()
         .required()
+        .trim()
+        .lowercase()
         .messages({
             'string.email': 'Please provide a valid email',
             'any.required': 'Email is required'
@@ -70,8 +72,22 @@ const loginSchema = Joi.object({
         .optional()  // Firebase handles password
 });
 
+// JWT creation schema
+const jwtSchema = Joi.object({
+    email: Joi.string()
+        .email()
+        .trim()
+        .lowercase()
+        .required()
+        .messages({
+            'string.email': 'Please provide a valid email',
+            'any.required': 'Email is required'
+        })
+});
+
 module.exports = {
     createUserSchema,
     updateUserSchema,
-    loginSchema
+    loginSchema,
+    jwtSchema
 };

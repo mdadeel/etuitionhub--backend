@@ -47,7 +47,7 @@ const validate = (schema, property = 'body') => {
  * Shorthand validators for common schemas
  */
 const { createTuitionSchema, updateTuitionSchema } = require('./tuitionSchema');
-const { createUserSchema, updateUserSchema, loginSchema } = require('./userSchema');
+const { createUserSchema, updateUserSchema, loginSchema, jwtSchema } = require('./userSchema');
 
 module.exports = {
     validate,
@@ -57,5 +57,6 @@ module.exports = {
     validateUpdateTuition: validate(updateTuitionSchema),
     validateCreateUser: validate(createUserSchema),
     validateUpdateUser: validate(updateUserSchema),
-    validateLogin: validate(loginSchema)
+    validateLogin: validate(loginSchema),
+    validateJWT: validate(jwtSchema)
 };
