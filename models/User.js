@@ -32,6 +32,13 @@ var userSchema = new mongoose.Schema({
     expectedSalary: Number
 }, { timestamps: true });
 
+// Add indexes for performance
+userSchema.index({ email: 1 });           // Fast email lookups (auth)
+userSchema.index({ role: 1 });             // Filter by role (tutors list)
+userSchema.index({ email: 1, role: 1 });  // Composite for tutor search
+userSchema.index({ verificationStatus: 1 }); // Filter by verification
+userSchema.index({ ratings: -1 });         // Sort tutors by rating
+
 var User = mongoose.model('User', userSchema);
 
 module.exports = User;
